@@ -1,0 +1,111 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [ develop ]
+  push:
+    branches: [ develop ]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  set-pr-title:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set safe environment variables
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          SAFE_PR_NUMBER=$(printf '%s' "$PR_NUMBER" | tr -dc '0-9')
+          SAFE_BRANCH_NAME=$(printf '%s' "$HEAD_REF" | tr -dc '[:alnum:]-_/')
+
+          echo "SAFE_PR_NUMBER=$SAFE_PR_NUMBER" >> "$GITHUB_ENV"
+          echo "SAFE_BRANCH_NAME=$SAFE_BRANCH_NAME" >> "$GITHUB_ENV"
+
+      - name: Update PR title
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="$SAFE_BRANCH_NAME"
+          PR_NUMBER="$SAFE_PR_NUMBER"
+
+          TICKET=$(echo "$BRANCH_NAME" | grep -o 'UC-[0-9]\+')
+          if [ -z "$TICKET" ]; then
+            echo "No UC ticket found. Skipping."
+            exit 0
+          fi
+
+          git fetch origin "$BRANCH_NAME"
+          LAST_COMMIT=$(git log "origin/${BRANCH_NAME}" --no-merges -1 --pretty=%B)
+          NEW_TITLE="${TICKET} ${LAST_COMMIT}"
+
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+
+  ci:
+    name: CI (Build & Test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Build + Test + JaCoCo
+        run: mvn -B clean verify jacoco:report
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: SonarQube Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B sonar:sonar -Dsonar.token=${SONAR_TOKEN}
+
+  release:
+    name: Release (Docker Build & Push)
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/${OWNER_LOWER}/uc-backend:latest
+          docker build -t $IMAGE_NAME .
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE_NAME }}
