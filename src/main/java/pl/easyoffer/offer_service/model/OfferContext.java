@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldNameConstants;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @EqualsAndHashCode
 @FieldNameConstants
-public class OfferContext {
+public class OfferContext implements Serializable {
 
     private LocalDate publishDate;
     private String title;
