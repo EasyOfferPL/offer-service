@@ -3,6 +3,7 @@ package pl.easyoffer.offer_service.model;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldNameConstants;
 import org.hibernate.annotations.Type;
 
 @Entity
@@ -13,6 +14,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldNameConstants
 public class OfferEntity extends AbstractAuditingEntity<Long> {
 
     @Id
@@ -25,7 +27,7 @@ public class OfferEntity extends AbstractAuditingEntity<Long> {
     private OfferType type;
 
     @Type(JsonType.class)
-    @Column(name = "OFFER_CONTEXT")
+    @Column(name = "OFFER_CONTEXT", columnDefinition = "json") //todo jsonb for postgres
     private OfferContext offerContext;
 
     private boolean actual;
