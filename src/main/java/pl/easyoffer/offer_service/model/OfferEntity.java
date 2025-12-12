@@ -1,10 +1,10 @@
 package pl.easyoffer.offer_service.model;
 
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "OFFER")
@@ -26,7 +26,7 @@ public class OfferEntity extends AbstractAuditingEntity<Long> {
     @Enumerated(EnumType.STRING)
     private OfferType type;
 
-    @Type(JsonType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "OFFER_CONTEXT", columnDefinition = "json") //todo jsonb for postgres
     private OfferContext offerContext;
 

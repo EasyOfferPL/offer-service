@@ -6,12 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 
+import java.io.Serializable;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-public class TechSkill {
+public class TechSkill implements Serializable {
 
     private String name;
     private TechSkillGrade grade;

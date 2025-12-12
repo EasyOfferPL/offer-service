@@ -1,19 +1,18 @@
 package pl.easyoffer.offer_service.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Builder
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 @FieldNameConstants
-public class WorkSalary {
+public class WorkSalary implements Serializable {
 
     private BigDecimal min;
     private BigDecimal max;
