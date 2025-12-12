@@ -1,19 +1,18 @@
 package pl.easyoffer.offer_service.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.FieldNameConstants;
 
+import java.io.Serializable;
 import java.util.Set;
 
 @Builder
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 @FieldNameConstants
-public class WorkConditions {
+public class WorkConditions implements Serializable {
 
     private String workSchedule;
     private Set<String> contractTypes;
