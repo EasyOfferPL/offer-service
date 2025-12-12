@@ -1,5 +1,6 @@
 package pl.easyoffer.offer_service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,6 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @EqualsAndHashCode
 @FieldNameConstants
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OfferContext implements Serializable {
 
     private LocalDate publishDate;
