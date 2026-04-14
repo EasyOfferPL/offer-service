@@ -1,43 +1,59 @@
 package pl.easyoffer.offer_service.controller;
 
-import com.easyoffer.offer_client.to.OfferSearchRequest;
-import com.easyoffer.offer_client.to.OfferTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-import pl.easyoffer.offer_service.service.OfferService;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
+import pl.easyoffer.offer_service.model.dto.JobOfferResponseTO;
+import pl.easyoffer.offer_service.model.dto.OfferStatsResponseTO;
+import pl.easyoffer.offer_service.service.JobOfferService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/v1.0/offers")
+@RequestMapping("/offers")
 public class OfferController {
 
-    private final OfferService offerService;
-
-    @GetMapping("/search")
-    public List<OfferTO> search(@ModelAttribute OfferSearchRequest offerSearchRequest) {
-        return offerService.searchOffers(offerSearchRequest);
-    }
+    private final JobOfferService jobOfferService;
 
     @GetMapping
-    public List<OfferTO> getAll() {
-        return offerService.getAll();
+    public Page<JobOfferResponseTO> getOffers(@PageableDefault(size = 20) Pageable pageable) {
+        return jobOfferService.getOffers(pageable);
     }
 
-    @GetMapping("/{offerId}")
-    public OfferTO getById(@PathVariable Long offerId) {
-        return offerService.getById(offerId);
+    @GetMapping("/{id}")
+    public JobOfferResponseTO getOfferById(@PathVariable Long id) {
+        return jobOfferService.getById(id);
+    }
+
+    @GetMapping("/search")
+    public Page<JobOfferResponseTO> searchOffers(
+            @RequestParam(required = false) String technology,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String experienceLevel,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return jobOfferService.search(technology, location, experienceLevel, pageable);
     }
 
     @PostMapping
-    public OfferTO create(@RequestBody OfferTO offerTO) {
-         return offerService.save(offerTO);
+    @ResponseStatus(HttpStatus.CREATED)
+    public JobOfferResponseTO createOffer(@Valid @RequestBody JobOfferRequestTO request) {
+        return jobOfferService.createOrUpdate(request);
     }
 
-    @PutMapping("/{offerId}")
-    public OfferTO update(@PathVariable Long offerId, @RequestBody OfferTO offerTO) {
-        return offerService.update(offerTO);
+    @GetMapping("/stats")
+    public OfferStatsResponseTO getStats(@RequestParam(defaultValue = "10") int top) {
+        return jobOfferService.getStats(top);
     }
-
 }

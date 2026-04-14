@@ -1,33 +1,39 @@
 package pl.easyoffer.offer_service.util;
 
-import lombok.NoArgsConstructor;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.CollectionUtils;
-import pl.easyoffer.offer_service.model.OfferEntity;
+import org.springframework.util.StringUtils;
+import pl.easyoffer.offer_service.model.domain.JobOffer;
 
-import java.util.List;
-import java.util.Objects;
+public final class OfferSpecificationBuilder {
 
-@NoArgsConstructor
-public class OfferSpecificationBuilder {
-
-    private Specification<OfferEntity> spec;
-
-    public static OfferSpecificationBuilder builder() {
-        return new OfferSpecificationBuilder();
+    private OfferSpecificationBuilder() {
     }
 
-    public OfferSpecificationBuilder withIds(List<Long> ids) {
-        if (!CollectionUtils.isEmpty(ids)) {
-            Specification<OfferEntity> idSpec = (root, query, criteriaBuilder) ->
-                    root.get(OfferEntity.Fields.id.toUpperCase()).in(ids);
-            spec = Objects.nonNull(spec) ? spec.and(idSpec) : idSpec;
+    public static Specification<JobOffer> build(String technology, String location, String experienceLevel) {
+        Specification<JobOffer> specification = (root, query, cb) -> cb.conjunction();
+
+        if (StringUtils.hasText(technology)) {
+            String normalized = technology.trim().toLowerCase();
+            specification = specification.and((root, query, cb) -> {
+                var technologies = root.join("technologies", JoinType.LEFT);
+                query.distinct(true);
+                return cb.equal(cb.lower(technologies.get("name")), normalized);
+            });
         }
-        return this;
-    }
 
-    public Specification<OfferEntity> build() {
-        return spec;
-    }
+        if (StringUtils.hasText(location)) {
+            String normalized = location.trim().toLowerCase();
+            specification = specification.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("location")), "%" + normalized + "%"));
+        }
 
+        if (StringUtils.hasText(experienceLevel)) {
+            String normalized = experienceLevel.trim().toLowerCase();
+            specification = specification.and((root, query, cb) ->
+                    cb.equal(cb.lower(root.get("experienceLevel")), normalized));
+        }
+
+        return specification;
+    }
 }

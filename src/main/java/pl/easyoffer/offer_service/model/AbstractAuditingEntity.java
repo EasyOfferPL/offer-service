@@ -11,7 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
@@ -27,10 +27,10 @@ public abstract class AbstractAuditingEntity<T> implements Serializable {
 
     @CreatedDate
     @Column(name = "CREATED_AT")
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "UPDATED_AT")
-    private LocalDate updatedAt;
+    private LocalDateTime updatedAt;
 
 }
