@@ -6,8 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import pl.easyoffer.offer_service.model.domain.JobOffer;
+import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
 import pl.easyoffer.offer_service.repository.JobOfferRepository;
 import pl.easyoffer.offer_service.repository.projection.TechnologyCountProjection;
 
@@ -17,27 +16,27 @@ public class JobOfferPersistenceService {
 
     private final JobOfferRepository jobOfferRepository;
 
-    public Page<JobOffer> findAll(Pageable pageable) {
+    public Page<JobOfferEntity> findAll(Pageable pageable) {
         return jobOfferRepository.findAll(pageable);
     }
 
-    public Optional<JobOffer> findById(Long id) {
+    public Optional<JobOfferEntity> findById(Long id) {
         return jobOfferRepository.findById(id);
     }
 
-    public Page<JobOffer> search(Specification<JobOffer> specification, Pageable pageable) {
+    public Page<JobOfferEntity> search(Specification<JobOfferEntity> specification, Pageable pageable) {
         return jobOfferRepository.findAll(specification, pageable);
     }
 
-    public JobOffer save(JobOffer offer) {
+    public JobOfferEntity save(JobOfferEntity offer) {
         return jobOfferRepository.save(offer);
     }
 
-    public Optional<JobOffer> findByExternalId(String externalId) {
+    public Optional<JobOfferEntity> findByExternalId(String externalId) {
         return jobOfferRepository.findByExternalId(externalId);
     }
 
-    public Optional<JobOffer> findDuplicateByCoreFields(String title, String companyName, String location) {
+    public Optional<JobOfferEntity> findDuplicateByCoreFields(String title, String companyName, String location) {
         return jobOfferRepository.findDuplicateByCoreFields(title, companyName, location);
     }
 

@@ -33,3 +33,6 @@ logging:
   level:
     root: INFO
     pl.easyoffer.offer_service: INFO
+
+service:
+  justJoinIt-service: "https://justjoin.it/"

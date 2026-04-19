@@ -1,10 +1,5 @@
 package pl.easyoffer.offer_service.service;
 
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,19 +8,27 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import pl.easyoffer.offer_service.model.domain.JobOffer;
-import pl.easyoffer.offer_service.model.domain.Technology;
+import pl.easyoffer.offer_service.exception.NotFoundException;
+import pl.easyoffer.offer_service.mapper.JobOfferMapper;
+import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.JobOfferResponseTO;
 import pl.easyoffer.offer_service.model.dto.OfferStatsResponseTO;
 import pl.easyoffer.offer_service.model.dto.TopTechnologyTO;
-import pl.easyoffer.offer_service.exception.NotFoundException;
-import pl.easyoffer.offer_service.exception.ValidationException;
-import pl.easyoffer.offer_service.mapper.JobOfferMapper;
+import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
+import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.service.persistence.JobOfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 import pl.easyoffer.offer_service.util.OfferSpecificationBuilder;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.apache.logging.log4j.util.Strings.isNotBlank;
 
 @Service
 @RequiredArgsConstructor
@@ -35,33 +38,31 @@ public class JobOfferService {
 
     private final JobOfferPersistenceService jobOfferPersistenceService;
     private final TechnologyPersistenceService technologyPersistenceService;
-    private final JobOfferMapper jobOfferMapper;
 
     @Transactional(readOnly = true)
     public Page<JobOfferResponseTO> getOffers(Pageable pageable) {
-        return jobOfferPersistenceService.findAll(pageable).map(jobOfferMapper::toResponse);
+        return jobOfferPersistenceService.findAll(pageable).map(JobOfferMapper.INSTANCE::toResponse);
     }
 
     @Transactional(readOnly = true)
     public JobOfferResponseTO getById(Long id) {
-        JobOffer offer = jobOfferPersistenceService.findById(id)
+        JobOfferEntity offer = jobOfferPersistenceService.findById(id)
                 .orElseThrow(() -> new NotFoundException("Offer not found for id: " + id));
-        return jobOfferMapper.toResponse(offer);
+        return JobOfferMapper.INSTANCE.toResponse(offer);
     }
 
     @Transactional(readOnly = true)
     public Page<JobOfferResponseTO> search(String technology, String location, String experienceLevel, Pageable pageable) {
         return jobOfferPersistenceService.search(OfferSpecificationBuilder.build(technology, location, experienceLevel), pageable)
-                .map(jobOfferMapper::toResponse);
+                .map(JobOfferMapper.INSTANCE::toResponse);
     }
 
     @Transactional
     public JobOfferResponseTO createOrUpdate(JobOfferRequestTO request) {
-        validateRequest(request);
         normalizeRequest(request);
 
-        Optional<JobOffer> duplicate = findDuplicate(request);
-        JobOffer target = duplicate.orElseGet(JobOffer::new);
+        Optional<JobOfferEntity> duplicate = findDuplicate(request);
+        JobOfferEntity target = duplicate.orElseGet(JobOfferEntity::new);
 
         if (duplicate.isPresent()) {
             log.info("Duplicate offer detected, updating existing record. offerId={}", target.getId());
@@ -69,10 +70,11 @@ public class JobOfferService {
             log.info("Creating new offer for title='{}', company='{}'", request.getTitle(), request.getCompanyName());
         }
 
-        jobOfferMapper.updateEntityFromRequest(request, target);
+        JobOfferMapper.INSTANCE.updateEntity(request, target);
         target.setTechnologies(resolveTechnologies(request));
-        JobOffer saved = jobOfferPersistenceService.save(target);
-        return jobOfferMapper.toResponse(saved);
+        target.setSource(isNotBlank(request.getSource()) ? request.getSource() : JobOfferSourceType.MANUAL.getName());
+        JobOfferEntity saved = jobOfferPersistenceService.save(target);
+        return JobOfferMapper.INSTANCE.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -85,9 +87,9 @@ public class JobOfferService {
         return new OfferStatsResponseTO(totalOffers, topTechnologies);
     }
 
-    private Optional<JobOffer> findDuplicate(JobOfferRequestTO request) {
+    private Optional<JobOfferEntity> findDuplicate(JobOfferRequestTO request) {
         if (StringUtils.hasText(request.getExternalId())) {
-            Optional<JobOffer> byExternalId = jobOfferPersistenceService.findByExternalId(request.getExternalId());
+            Optional<JobOfferEntity> byExternalId = jobOfferPersistenceService.findByExternalId(request.getExternalId());
             if (byExternalId.isPresent()) {
                 return byExternalId;
             }
@@ -100,39 +102,24 @@ public class JobOfferService {
         );
     }
 
-    private Set<Technology> resolveTechnologies(JobOfferRequestTO request) {
-        if (request.getTechnologies() == null || request.getTechnologies().isEmpty()) {
+    private Set<TechnologyEntity> resolveTechnologies(JobOfferRequestTO request) {
+        if (CollectionUtils.isEmpty(request.getTechnologies())) {
             return Collections.emptySet();
         }
 
         return request.getTechnologies().stream()
-                .filter(StringUtils::hasText)
-                .map(value -> value.trim().toLowerCase(Locale.ROOT))
-                .distinct()
-                .map(this::findOrCreateTechnology)
+                .map(technologyTO -> findOrCreateTechnology(technologyTO.getName(), technologyTO.getLevel()))
                 .collect(Collectors.toSet());
     }
 
-    private Technology findOrCreateTechnology(String name) {
-        return technologyPersistenceService.findByName(name)
+    private TechnologyEntity findOrCreateTechnology(String name, Integer level) {
+        return technologyPersistenceService.findByNameAndLevel(name, level)
                 .orElseGet(() -> {
-                    Technology technology = new Technology();
-                    technology.setName(name);
-                    return technologyPersistenceService.save(technology);
+                    TechnologyEntity technologyEntity = new TechnologyEntity();
+                    technologyEntity.setName(name);
+                    technologyEntity.setLevel(level);
+                    return technologyPersistenceService.save(technologyEntity);
                 });
-    }
-
-    private void validateRequest(JobOfferRequestTO request) {
-        if (!StringUtils.hasText(request.getTitle())) {
-            throw new ValidationException("title must not be empty");
-        }
-        if (!StringUtils.hasText(request.getCompanyName())) {
-            throw new ValidationException("companyName must not be empty");
-        }
-        if (request.getSalaryMin() != null && request.getSalaryMax() != null
-                && request.getSalaryMin().compareTo(request.getSalaryMax()) > 0) {
-            throw new ValidationException("salaryMin must be less than or equal to salaryMax");
-        }
     }
 
     private void normalizeRequest(JobOfferRequestTO request) {

@@ -3,7 +3,7 @@ package pl.easyoffer.offer_service.service.persistence;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import pl.easyoffer.offer_service.model.domain.Technology;
+import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.repository.TechnologyRepository;
 
 @Service
@@ -12,11 +12,11 @@ public class TechnologyPersistenceService {
 
     private final TechnologyRepository technologyRepository;
 
-    public Optional<Technology> findByName(String name) {
-        return technologyRepository.findByName(name);
+    public Optional<TechnologyEntity> findByNameAndLevel(String name, Integer level) {
+        return technologyRepository.findByNameAndLevel(name, level);
     }
 
-    public Technology save(Technology technology) {
-        return technologyRepository.save(technology);
+    public TechnologyEntity save(TechnologyEntity technologyEntity) {
+        return technologyRepository.save(technologyEntity);
     }
 }

@@ -3,15 +3,15 @@ package pl.easyoffer.offer_service.util;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
-import pl.easyoffer.offer_service.model.domain.JobOffer;
+import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
 
 public final class OfferSpecificationBuilder {
 
     private OfferSpecificationBuilder() {
     }
 
-    public static Specification<JobOffer> build(String technology, String location, String experienceLevel) {
-        Specification<JobOffer> specification = (root, query, cb) -> cb.conjunction();
+    public static Specification<JobOfferEntity> build(String technology, String location, String experienceLevel) {
+        Specification<JobOfferEntity> specification = (root, query, cb) -> cb.conjunction();
 
         if (StringUtils.hasText(technology)) {
             String normalized = technology.trim().toLowerCase();

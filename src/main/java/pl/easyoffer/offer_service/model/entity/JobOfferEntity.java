@@ -1,24 +1,13 @@
-package pl.easyoffer.offer_service.model.domain;
+package pl.easyoffer.offer_service.model.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
-
-import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
-
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import pl.easyoffer.offer_service.model.AbstractAuditingEntity;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -31,7 +20,7 @@ import pl.easyoffer.offer_service.model.AbstractAuditingEntity;
                 @Index(name = "IDX_JOB_OFFER_LOCATION", columnList = "LOCATION")
         }
 )
-public class JobOffer extends AbstractAuditingEntity<Long> {
+public class JobOfferEntity extends AbstractAuditingEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,13 +50,19 @@ public class JobOffer extends AbstractAuditingEntity<Long> {
     @Column(name = "WORK_MODE", length = 50)
     private String workMode;
 
+    @Column(name = "WORKING_TIME", length = 50)
+    private String workingTime;
+
     @Column(name = "SALARY_MIN", precision = 19, scale = 2)
     private BigDecimal salaryMin;
 
     @Column(name = "SALARY_MAX", precision = 19, scale = 2)
     private BigDecimal salaryMax;
 
-    @Column(name = "CURRENCY", length = 10)
+    @Column(name = "SALARY_UNIT")
+    private String salaryUnit;
+
+    @Column(name = "CURRENCY", length = 3)
     private String currency;
 
     @Column(name = "SOURCE", length = 100)
@@ -76,8 +71,23 @@ public class JobOffer extends AbstractAuditingEntity<Long> {
     @Column(name = "URL", length = 1000)
     private String url;
 
-    @Column(name = "ACTIVE", nullable = false)
-    private boolean active = true;
+    @Column(name = "LANGUAGE", length = 255)
+    private String language;
+
+    @Column(name = "CATEGORY", length = 255)
+    private String category;
+
+    @Column(name = "PUBLISHED_AT")
+    private LocalDateTime publishedAt;
+
+    @Column(name = "LAST_PUBLISHED_AT")
+    private LocalDateTime lastPublishedAt;
+
+    @Column(name = "EXPIRED_AT")
+    private LocalDateTime expiredAt;
+
+    @Column(name = "IS_OPEN_TO_HIRE_UKRAINIANS")
+    private Boolean isOpenToHireUkrainians;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -85,6 +95,6 @@ public class JobOffer extends AbstractAuditingEntity<Long> {
             joinColumns = @JoinColumn(name = "JOB_OFFER_ID"),
             inverseJoinColumns = @JoinColumn(name = "TECHNOLOGY_ID")
     )
-    private Set<Technology> technologies = new HashSet<>();
+    private Set<TechnologyEntity> technologies = new HashSet<>();
 
 }

@@ -8,27 +8,37 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
-import pl.easyoffer.offer_service.model.domain.JobOffer;
-import pl.easyoffer.offer_service.model.domain.Technology;
+import org.mapstruct.factory.Mappers;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
+import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
+import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.JobOfferResponseTO;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface JobOfferMapper {
 
+    JobOfferMapper INSTANCE = Mappers.getMapper(JobOfferMapper.class);
+
     @Mapping(target = "technologies", expression = "java(mapTechnologies(entity.getTechnologies()))")
-    JobOfferResponseTO toResponse(JobOffer entity);
+    JobOfferResponseTO toResponse(JobOfferEntity entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "technologies", ignore = true)
-    @Mapping(target = "active", expression = "java(request.getActive() == null || request.getActive())")
-    void updateEntityFromRequest(JobOfferRequestTO request, @MappingTarget JobOffer entity);
+    @Mapping(source = "isOpenToHireUkrainians", target = "isOpenToHireUkrainians")
+    void updateEntity(JobOfferRequestTO src, @MappingTarget JobOfferEntity dst);
 
-    default List<String> mapTechnologies(Set<Technology> technologies) {
+    @Mapping(source = "guid", target = "externalId")
+    @Mapping(source = "workplaceType", target = "workMode")
+    @Mapping(source = "category.key", target = "category")
+    @Mapping(source = "city", target = "location")
+    JobOfferRequestTO map(JustJoinItOffer src);
+
+    default List<String> mapTechnologies(Set<TechnologyEntity> technologies) {
         return technologies.stream()
-                .map(Technology::getName)
+                .map(TechnologyEntity::getName)
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
     }

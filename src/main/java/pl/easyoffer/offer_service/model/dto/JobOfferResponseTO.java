@@ -24,8 +24,9 @@ public class JobOfferResponseTO {
     private String currency;
     private String source;
     private String url;
-    private boolean active;
+    private String language;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> technologies;
+
 }

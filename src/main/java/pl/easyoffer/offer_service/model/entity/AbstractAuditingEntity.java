@@ -1,4 +1,4 @@
-package pl.easyoffer.offer_service.model;
+package pl.easyoffer.offer_service.model.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
