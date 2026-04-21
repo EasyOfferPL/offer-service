@@ -86,8 +86,8 @@ public class JobOfferEntity extends AbstractAuditingEntity<Long> {
     @Column(name = "EXPIRED_AT")
     private LocalDateTime expiredAt;
 
-    @Column(name = "IS_OPEN_TO_HIRE_UKRAINIANS")
-    private Boolean isOpenToHireUkrainians;
+    @Column(name = "OPEN_TO_HIRE_UKRAINIANS")
+    private Boolean openToHireUkrainians;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

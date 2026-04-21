@@ -59,6 +59,6 @@ public class JobOfferRequestTO {
 
     private LocalDateTime expiredAt;
 
-    private boolean isOpenToHireUkrainians;
+    private boolean openToHireUkrainians;
 
 }

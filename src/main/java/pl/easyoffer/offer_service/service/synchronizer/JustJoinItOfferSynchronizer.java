@@ -65,27 +65,10 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
                             .map(JustJoinItLanguage::getCode)
                             .orElse(null)
                     );
-                    determineSalaryParameters(mappedOffer, offer);
                     mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.getName());
                     return mappedOffer;
                 })
                 .forEach(jobOfferService::createOrUpdate);
-    }
-
-    private void determineSalaryParameters(JobOfferRequestTO offer, JustJoinItOffer sourceOffer) {
-        JustJoinItEmploymentType originalEmploymentType = findOriginalEmploymentType(sourceOffer);
-        offer.setCurrency(originalEmploymentType.getCurrency());
-        offer.setSalaryMin(originalEmploymentType.getFrom());
-        offer.setSalaryMax(originalEmploymentType.getTo());
-        offer.setEmploymentType(originalEmploymentType.getType());
-        offer.setSalaryUnit(originalEmploymentType.getUnit());
-    }
-
-    private JustJoinItEmploymentType findOriginalEmploymentType(JustJoinItOffer offer) {
-        return offer.getEmploymentTypes().stream()
-                .filter(employmentType -> "original".equals(employmentType.getCurrencySource()))
-                .findFirst()
-                .get();
     }
 
 }

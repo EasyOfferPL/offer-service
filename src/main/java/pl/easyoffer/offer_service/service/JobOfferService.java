@@ -59,7 +59,7 @@ public class JobOfferService {
 
     @Transactional
     public JobOfferResponseTO createOrUpdate(JobOfferRequestTO request) {
-        normalizeRequest(request);
+        JobOfferMapper.INSTANCE.normalizeRequest(request);
 
         Optional<JobOfferEntity> duplicate = findDuplicate(request);
         JobOfferEntity target = duplicate.orElseGet(JobOfferEntity::new);
@@ -122,24 +122,4 @@ public class JobOfferService {
                 });
     }
 
-    private void normalizeRequest(JobOfferRequestTO request) {
-        request.setExternalId(trimToNull(request.getExternalId()));
-        request.setTitle(trimToNull(request.getTitle()));
-        request.setCompanyName(trimToNull(request.getCompanyName()));
-        request.setLocation(trimToNull(request.getLocation()));
-        request.setDescription(trimToNull(request.getDescription()));
-        request.setExperienceLevel(trimToNull(request.getExperienceLevel()));
-        request.setEmploymentType(trimToNull(request.getEmploymentType()));
-        request.setWorkMode(trimToNull(request.getWorkMode()));
-        request.setCurrency(trimToNull(request.getCurrency()));
-        request.setSource(trimToNull(request.getSource()));
-        request.setUrl(trimToNull(request.getUrl()));
-    }
-
-    private String trimToNull(String value) {
-        if (!StringUtils.hasText(value)) {
-            return null;
-        }
-        return value.trim();
-    }
 }
