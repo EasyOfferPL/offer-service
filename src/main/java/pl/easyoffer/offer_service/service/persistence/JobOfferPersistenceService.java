@@ -40,11 +40,4 @@ public class JobOfferPersistenceService {
         return jobOfferRepository.findDuplicateByCoreFields(title, companyName, location);
     }
 
-    public long count() {
-        return jobOfferRepository.count();
-    }
-
-    public java.util.List<TechnologyCountProjection> findTopTechnologies(Pageable pageable) {
-        return jobOfferRepository.findTopTechnologies(pageable);
-    }
 }

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,8 +14,6 @@ import pl.easyoffer.offer_service.mapper.JobOfferMapper;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.JobOfferResponseTO;
-import pl.easyoffer.offer_service.model.dto.OfferStatsResponseTO;
-import pl.easyoffer.offer_service.model.dto.TopTechnologyTO;
 import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.service.persistence.JobOfferPersistenceService;
@@ -77,16 +74,6 @@ public class JobOfferService {
         return JobOfferMapper.INSTANCE.toResponse(saved);
     }
 
-    @Transactional(readOnly = true)
-    public OfferStatsResponseTO getStats(int topLimit) {
-        int normalizedLimit = Math.max(topLimit, 1);
-        long totalOffers = jobOfferPersistenceService.count();
-        var topTechnologies = jobOfferPersistenceService.findTopTechnologies(PageRequest.of(0, normalizedLimit)).stream()
-                .map(row -> new TopTechnologyTO(row.getName(), row.getOfferCount()))
-                .toList();
-        return new OfferStatsResponseTO(totalOffers, topTechnologies);
-    }
-
     private Optional<JobOfferEntity> findDuplicate(JobOfferRequestTO request) {
         if (StringUtils.hasText(request.getExternalId())) {
             Optional<JobOfferEntity> byExternalId = jobOfferPersistenceService.findByExternalId(request.getExternalId());
@@ -103,13 +90,14 @@ public class JobOfferService {
     }
 
     private Set<TechnologyEntity> resolveTechnologies(JobOfferRequestTO request) {
-        if (CollectionUtils.isEmpty(request.getTechnologies())) {
-            return Collections.emptySet();
-        }
-
-        return request.getTechnologies().stream()
-                .map(technologyTO -> findOrCreateTechnology(technologyTO.getName(), technologyTO.getLevel()))
-                .collect(Collectors.toSet());
+        return Optional.of(request)
+                .map(JobOfferRequestTO::getTechnologies)
+                .filter(technologies -> !CollectionUtils.isEmpty(technologies))
+                .map(technologies -> technologies.stream()
+                        .map(technologyTO -> findOrCreateTechnology(technologyTO.getName(), technologyTO.getLevel()))
+                        .collect(Collectors.toSet())
+                )
+                .orElse(Collections.emptySet());
     }
 
     private TechnologyEntity findOrCreateTechnology(String name, Integer level) {

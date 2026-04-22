@@ -26,13 +26,4 @@ public interface JobOfferRepository extends JpaRepository<JobOfferEntity, Long>,
             @Param("location") String location
     );
 
-    @Query("""
-            SELECT t.name AS name, COUNT(jo.id) AS offerCount
-            FROM JobOfferEntity jo
-            JOIN jo.technologies t
-            GROUP BY t.name
-            ORDER BY COUNT(jo.id) DESC
-            """)
-    List<TechnologyCountProjection> findTopTechnologies(org.springframework.data.domain.Pageable pageable);
-
 }

@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.JobOfferResponseTO;
-import pl.easyoffer.offer_service.model.dto.OfferStatsResponseTO;
 import pl.easyoffer.offer_service.service.JobOfferService;
 
 @RestController
@@ -45,8 +44,4 @@ public class OfferController {
         return jobOfferService.createOrUpdate(request);
     }
 
-    @GetMapping("/stats")
-    public OfferStatsResponseTO getStats(@RequestParam(defaultValue = "10") int top) {
-        return jobOfferService.getStats(top);
-    }
 }
