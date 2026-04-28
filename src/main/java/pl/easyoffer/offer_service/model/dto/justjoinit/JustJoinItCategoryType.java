@@ -1,6 +1,6 @@
 package pl.easyoffer.offer_service.model.dto.justjoinit;
 
-public enum CategoryType {
+public enum JustJoinItCategoryType {
     AI,
     JAVASCRIPT,
     HTML,

@@ -3,13 +3,17 @@ package pl.easyoffer.offer_service.service.synchronizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import pl.easyoffer.offer_service.client.JustJoinItClient;
+import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
 import pl.easyoffer.offer_service.mapper.JobOfferMapper;
 import pl.easyoffer.offer_service.mapper.TechnologyMapper;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
-import pl.easyoffer.offer_service.model.dto.justjoinit.*;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItCategoryType;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItLanguage;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOfferData;
 import pl.easyoffer.offer_service.service.JobOfferService;
 
 import java.util.*;
@@ -17,6 +21,7 @@ import java.util.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "feature.justjoinit-synchronizer-enabled", havingValue = "true")
 public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
 
     private static final char PATH_DELIMITER = '/';
@@ -31,17 +36,17 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     @Override
     public void synchronize() {
         log.info("JustJoinIt synchronizer - start");
-        List<JustJoinItOffer> offers = Arrays.stream(CategoryType.values())
+        List<JustJoinItOffer> offers = Arrays.stream(JustJoinItCategoryType.values())
                 .map(Enum::name)
                 .map(String::toLowerCase)
-                .map(this::scrapOffers)
+                .map(this::fetchOffers)
                 .flatMap(Collection::stream)
                 .toList();
         save(offers);
         log.info("JustJoinIt synchronizer - end");
     }
 
-    private List<JustJoinItOffer> scrapOffers(String category) {
+    private List<JustJoinItOffer> fetchOffers(String category) {
         int limit = 100;
         int offset = 0;
         List<JustJoinItOffer> offers = new ArrayList<>();

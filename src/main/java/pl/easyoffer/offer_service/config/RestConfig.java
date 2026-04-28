@@ -1,6 +1,8 @@
 package pl.easyoffer.offer_service.config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import feign.Feign;
 import feign.Logger;
 import feign.jackson.JacksonDecoder;
@@ -8,18 +10,13 @@ import feign.jackson.JacksonEncoder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import pl.easyoffer.offer_service.client.JustJoinItClient;
+import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
 
 @Configuration
-public class FeignConfig {
+public class RestConfig {
 
     @Bean
-    public JustJoinItClient jobOfferClient(
-            @Value("${service.justJoinIt-service}") String url
-    ) {
+    public JustJoinItClient jobOfferClient(@Value("${service.justJoinIt-service}") String url) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

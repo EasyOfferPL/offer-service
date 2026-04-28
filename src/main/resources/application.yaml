@@ -36,3 +36,6 @@ logging:
 
 service:
   justJoinIt-service: "https://justjoin.it/"
+
+feature:
+  justjoinit-synchronizer-enabled: false
