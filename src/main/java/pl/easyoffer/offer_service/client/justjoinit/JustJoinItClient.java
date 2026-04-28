@@ -1,4 +1,4 @@
-package pl.easyoffer.offer_service.client;
+package pl.easyoffer.offer_service.client.justjoinit;
 
 import feign.Headers;
 import feign.Param;
