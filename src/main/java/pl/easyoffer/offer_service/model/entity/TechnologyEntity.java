@@ -1,11 +1,6 @@
 package pl.easyoffer.offer_service.model.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +17,7 @@ public class TechnologyEntity {
     @Column(name = "NAME", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "LEVEL", nullable = false)
+    @Column(name = "LEVEL")
     private Integer level;
 
 }

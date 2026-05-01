@@ -1,7 +1,10 @@
 package pl.easyoffer.offer_service.model.dto.theprotocolit;
 
+import lombok.Data;
+
 import java.math.BigDecimal;
 
+@Data
 public class TheProtocolSalary {
 
     private BigDecimal from;

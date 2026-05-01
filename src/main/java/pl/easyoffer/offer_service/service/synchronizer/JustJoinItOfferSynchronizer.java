@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
-import pl.easyoffer.offer_service.mapper.JobOfferMapper;
+import pl.easyoffer.offer_service.mapper.JustJoinItOfferMapper;
 import pl.easyoffer.offer_service.mapper.TechnologyMapper;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
@@ -21,11 +21,10 @@ import java.util.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "feature.justjoinit-synchronizer-enabled", havingValue = "true")
+@ConditionalOnProperty(name = "feature.just-join-it-synchronizer-enabled", havingValue = "true")
 public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
 
-    private static final char PATH_DELIMITER = '/';
-    private static final String JOB_OFFER_PATH = "job-offer";
+    private static final String JOB_OFFER_PATH = "job-offer/";
 
     private final JobOfferService jobOfferService;
     private final JustJoinItClient justJoinItClient;
@@ -62,8 +61,9 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     private void save(List<JustJoinItOffer> offers) {
         offers.stream()
                 .map(offer -> {
-                    JobOfferRequestTO mappedOffer = JobOfferMapper.INSTANCE.map(offer);
-                    mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + PATH_DELIMITER + offer.getSlug());
+                    JobOfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
+                    //todo category???
+                    mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
                     mappedOffer.setTechnologies(TechnologyMapper.INSTANCE.map(offer.getAllSkills()));
                     mappedOffer.setLanguage(offer.getLanguages().stream()
                             .max(Comparator.comparing(JustJoinItLanguage::getLevel))

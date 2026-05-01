@@ -36,6 +36,8 @@ logging:
 
 service:
   justJoinIt-service: "https://justjoin.it/"
+  theProtocolIt-service: "https://theprotocol.it/"
 
 feature:
-  justjoinit-synchronizer-enabled: false
+  just-join-it-synchronizer-enabled: true
+  the-protocol-it-synchronizer-enabled: true

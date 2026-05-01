@@ -15,7 +15,7 @@ public class OfferSyncScheduler {
 
     private final List<OfferSynchronizer> offerSynchronizers;
 
-    @Scheduled(initialDelay = 0, fixedRate = 30 * 60 * 1000)
+    @Scheduled(initialDelay = 0/*, cron = "0 0 4 * * *"*/)
     private void synchronizeOffers() {
         log.info("Synchronizing offers - start");
         offerSynchronizers.forEach(OfferSynchronizer::synchronize);

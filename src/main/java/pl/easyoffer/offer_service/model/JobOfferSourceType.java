@@ -7,7 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum JobOfferSourceType {
     MANUAL("manual"),
-    JUST_JOIN_IT("justjoinit");
+    JUST_JOIN_IT("justjoinit"),
+    THE_PROTOCOL_IT("theprotocolit"),;
 
     private final String name;
 
