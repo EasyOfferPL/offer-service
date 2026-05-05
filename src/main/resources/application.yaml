@@ -39,5 +39,5 @@ service:
   theProtocolIt-service: "https://theprotocol.it/"
 
 feature:
-  just-join-it-synchronizer-enabled: true
-  the-protocol-it-synchronizer-enabled: true
+  just-join-it-synchronizer-enabled: false
+  the-protocol-it-synchronizer-enabled: false

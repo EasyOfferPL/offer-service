@@ -14,7 +14,7 @@ public interface JustJoinItOfferMapper {
 
     @Mapping(source = "guid", target = "externalId")
     @Mapping(source = "workplaceType", target = "workMode", qualifiedByName = "toUpperCase")
-    @Mapping(source = "category.key", target = "category")
+    @Mapping(source = "category.key", target = "category", qualifiedByName = "toUpperCase")
     @Mapping(source = "city", target = "location")
     @Mapping(source = "isOpenToHireUkrainians", target = "openToHireUkrainians")
     JobOfferRequestTO map(JustJoinItOffer src);

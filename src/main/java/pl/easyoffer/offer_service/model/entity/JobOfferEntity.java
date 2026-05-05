@@ -38,9 +38,6 @@ public class JobOfferEntity extends AbstractAuditingEntity<Long> {
     @Column(name = "LOCATION", length = 255)
     private String location;
 
-    @Column(name = "DESCRIPTION", columnDefinition = "TEXT")
-    private String description;
-
     @Column(name = "EXPERIENCE_LEVEL", length = 100)
     private String experienceLevel;
 
@@ -79,9 +76,6 @@ public class JobOfferEntity extends AbstractAuditingEntity<Long> {
 
     @Column(name = "PUBLISHED_AT")
     private LocalDateTime publishedAt;
-
-    @Column(name = "LAST_PUBLISHED_AT")
-    private LocalDateTime lastPublishedAt;
 
     @Column(name = "EXPIRED_AT")
     private LocalDateTime expiredAt;

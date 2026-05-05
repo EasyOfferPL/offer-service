@@ -1,11 +1,11 @@
 package pl.easyoffer.offer_service.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import lombok.Data;
 
 @Data
 public class JobOfferRequestTO {
@@ -20,9 +20,6 @@ public class JobOfferRequestTO {
 
     @NotBlank
     private String location;
-
-    @NotBlank
-    private String description;
 
     @NotBlank
     private String experienceLevel;
@@ -54,8 +51,6 @@ public class JobOfferRequestTO {
     private String language;
 
     private LocalDateTime publishedAt;
-
-    private LocalDateTime lastPublishedAt;
 
     private LocalDateTime expiredAt;
 

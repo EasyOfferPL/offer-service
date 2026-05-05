@@ -62,7 +62,6 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
         offers.stream()
                 .map(offer -> {
                     JobOfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
-                    //todo category???
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
                     mappedOffer.setTechnologies(TechnologyMapper.INSTANCE.map(offer.getAllSkills()));
                     mappedOffer.setLanguage(offer.getLanguages().stream()

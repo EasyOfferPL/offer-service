@@ -36,11 +36,11 @@ public interface JobOfferMapper {
 
     @AfterMapping
     default void normalizeRequest(@MappingTarget JobOfferRequestTO request) {
+        //todo
         request.setExternalId(trimToNull(request.getExternalId()));
         request.setTitle(trimToNull(request.getTitle()));
         request.setCompanyName(trimToNull(request.getCompanyName()));
         request.setLocation(trimToNull(request.getLocation()));
-        request.setDescription(trimToNull(request.getDescription()));
         request.setExperienceLevel(trimToNull(request.getExperienceLevel()));
         request.setEmploymentType(trimToNull(request.getEmploymentType()));
         request.setWorkMode(trimToNull(request.getWorkMode()));

@@ -34,7 +34,7 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
     public void synchronize() {
         log.info("TheProtocolIt synchronizer - start");
         List<TheProtocolOffer> offersJson = fetchOffers(Arrays.stream(TheProtocolCategoryType.values())
-                .map(TheProtocolCategoryType::getCategoryName)
+                .map(TheProtocolCategoryType::getTechnologyName)
                 .toList());
         saveAll(offersJson);
         log.info("TheProtocolIt synchronizer - end size: {}", offersJson.size());

@@ -8,9 +8,8 @@ import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.TechnologyTO;
 import pl.easyoffer.offer_service.model.dto.theprotocolit.*;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TheProtocolItMapper {
@@ -19,6 +18,7 @@ public interface TheProtocolItMapper {
 
     @Mapping(source = "id", target = "externalId")
     @Mapping(source = "technologies", target = "technologies", qualifiedByName = "mapTechnologies")
+    @Mapping(source = "technologies", target = "category", qualifiedByName = "mapCategory")
     @Mapping(source = "employer", target = "companyName")
     @Mapping(source = "workplace", target = "location", qualifiedByName = "mapLocation")
     @Mapping(source = "positionLevels", target = "experienceLevel", qualifiedByName = "mapExperienceLevel")
@@ -36,6 +36,27 @@ public interface TheProtocolItMapper {
         return rawTechnologies.stream()
                 .map(technology -> new TechnologyTO(technology, null))
                 .toList();
+    }
+
+    @Named("mapCategory")
+    default String mapCategory(List<String> rawTechnologies) {
+        if (CollectionUtils.isEmpty(rawTechnologies)) {
+            return null;
+        }
+        Set<String> allowedTechnologies = Arrays.stream(TheProtocolCategoryType.values())
+                .map(TheProtocolCategoryType::getTechnologyName)
+                .collect(Collectors.toSet());
+        List<String> filteredTechnologies = rawTechnologies.stream()
+                .filter(allowedTechnologies::contains)
+                .toList();
+        if (!CollectionUtils.isEmpty(filteredTechnologies)) {
+            TheProtocolCategoryType categoryType = TheProtocolCategoryType.getValueByTechnologyName(filteredTechnologies.getFirst());
+            String resolvedCategory = Objects.nonNull(categoryType.getCategoryName())
+                    ? categoryType.getCategoryName()
+                    : categoryType.getTechnologyName();
+            return resolvedCategory.toUpperCase();
+        }
+        return null;
     }
 
     @Named("mapLocation")
