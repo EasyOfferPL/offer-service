@@ -17,6 +17,7 @@ public interface TheProtocolItMapper {
     TheProtocolItMapper INSTANCE = Mappers.getMapper(TheProtocolItMapper.class);
 
     @Mapping(source = "id", target = "externalId")
+    @Mapping(source = "language", target = "language", qualifiedByName = "toUpperCase")
     @Mapping(source = "technologies", target = "technologies", qualifiedByName = "mapTechnologies")
     @Mapping(source = "technologies", target = "category", qualifiedByName = "mapCategory")
     @Mapping(source = "employer", target = "companyName")
@@ -27,6 +28,11 @@ public interface TheProtocolItMapper {
     @Mapping(source = "publicationDateUtc", target = "publishedAt")
     @Mapping(source = "isSupportingUkraine", target = "openToHireUkrainians")
     JobOfferRequestTO map(TheProtocolOffer src);
+
+    @Named("toUpperCase")
+    default String toUpperCase(String value) {
+        return value == null ? null : value.toUpperCase();
+    }
 
     @Named("mapTechnologies")
     default List<TechnologyTO> mapTechnologies(List<String> rawTechnologies) {
@@ -63,14 +69,15 @@ public interface TheProtocolItMapper {
     default String mapLocation(List<TheProtocolWorkplace> theProtocolWorkplace) {
         return Optional.ofNullable(theProtocolWorkplace.getFirst())
                 .map(TheProtocolWorkplace::getCity)
+                .map(String::toUpperCase)
                 .orElse(null);
-
     }
 
     @Named("mapExperienceLevel")
     default String mapExperienceLevel(List<TheProtocolPositionLevel> theProtocolPositionLevel) {
         return Optional.ofNullable(theProtocolPositionLevel.getFirst())
                 .map(TheProtocolPositionLevel::getValue)
+                .map(String::toUpperCase)
                 .orElse(null);
     }
 

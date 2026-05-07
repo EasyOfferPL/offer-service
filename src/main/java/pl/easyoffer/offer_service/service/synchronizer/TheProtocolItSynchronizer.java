@@ -49,7 +49,7 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
                 .map(offer -> {
                     JobOfferRequestTO mappedOffer = TheProtocolItMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getOfferUrlName());
-                    mappedOffer.setSource(JobOfferSourceType.THE_PROTOCOL_IT.getName());
+                    mappedOffer.setSource(JobOfferSourceType.THE_PROTOCOL_IT.name());
                     return mappedOffer;
                 })
                 .forEach(jobOfferService::createOrUpdate);

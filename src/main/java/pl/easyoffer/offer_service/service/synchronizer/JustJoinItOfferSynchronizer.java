@@ -61,15 +61,17 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     private void save(List<JustJoinItOffer> offers) {
         offers.stream()
                 .map(offer -> {
+                    //todo move to mapper
                     JobOfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
                     mappedOffer.setTechnologies(TechnologyMapper.INSTANCE.map(offer.getAllSkills()));
                     mappedOffer.setLanguage(offer.getLanguages().stream()
                             .max(Comparator.comparing(JustJoinItLanguage::getLevel))
                             .map(JustJoinItLanguage::getCode)
+                            .map(String::toUpperCase)
                             .orElse(null)
                     );
-                    mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.getName());
+                    mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.name());
                     return mappedOffer;
                 })
                 .forEach(jobOfferService::createOrUpdate);

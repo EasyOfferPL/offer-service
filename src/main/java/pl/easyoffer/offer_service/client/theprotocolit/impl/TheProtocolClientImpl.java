@@ -8,6 +8,7 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitUntilState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClient;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClientManager;
@@ -65,6 +66,8 @@ public class TheProtocolClientImpl implements TheProtocolClient {
             return await response.text();
         }
         """;
+
+    private static final String EMPTY_JSON_RESULT = "{}";
 
     private final TheProtocolClientManager theProtocolClientManager;
     private final ObjectMapper objectMapper;
@@ -135,7 +138,14 @@ public class TheProtocolClientImpl implements TheProtocolClient {
                 "apiUrl", apiUrl,
                 "xsrfToken", xsrfToken
         );
-        return browserPage.evaluate(fetchScript, requestArguments).toString();
+        String response;
+        try {
+            response = browserPage.evaluate(fetchScript, requestArguments).toString();
+        } catch (Exception e) {
+            log.error("Failed to perform request to TheProtocol.it", e);
+            return EMPTY_JSON_RESULT;
+        }
+        return Strings.isNotBlank(response) ? response : EMPTY_JSON_RESULT;
     }
 
 }
