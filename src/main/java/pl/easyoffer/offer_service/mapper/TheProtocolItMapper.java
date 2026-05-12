@@ -4,6 +4,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.springframework.util.CollectionUtils;
+import pl.easyoffer.offer_service.model.EuropeanCurrency;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.TechnologyTO;
 import pl.easyoffer.offer_service.model.dto.theprotocolit.*;
@@ -121,22 +122,16 @@ public interface TheProtocolItMapper {
                 .orElse(null);
     }
 
-    //todo remove PLN constant
     private static String determineSalaryCurrency(TheProtocolSalary salary) {
-        String pln = "PLN";
-        String plnSymbol = "zł";
         if (Strings.isNotBlank(salary.getCurrency())) {
-            if (plnSymbol.equals(salary.getCurrency())) {
-                return pln;
-            }
-            return salary.getCurrency();
-        } else if (Strings.isNotBlank(salary.getCurrencySymbol())) {
-            if (plnSymbol.equals(salary.getCurrencySymbol())) {
-                return pln;
-            }
-            return salary.getCurrencySymbol();
+            return EuropeanCurrency.resolveCode(salary.getCurrency());
         }
-        return pln;
+
+        if (Strings.isNotBlank(salary.getCurrencySymbol())) {
+            return EuropeanCurrency.resolveCode(salary.getCurrencySymbol());
+        }
+
+        return EuropeanCurrency.PLN.getCode();
     }
 
 }

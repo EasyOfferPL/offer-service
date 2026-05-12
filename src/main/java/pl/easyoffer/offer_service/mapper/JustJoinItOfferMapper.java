@@ -3,11 +3,15 @@ package pl.easyoffer.offer_service.mapper;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
+import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItLanguage;
 import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
+
+import java.util.Comparator;
+import java.util.List;
 
 import static pl.easyoffer.offer_service.model.dto.justjoinit.CurrencySourceType.ORIGINAL;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = TechnologyMapper.class)
 public interface JustJoinItOfferMapper {
 
     JustJoinItOfferMapper INSTANCE = Mappers.getMapper(JustJoinItOfferMapper.class);
@@ -19,11 +23,22 @@ public interface JustJoinItOfferMapper {
     @Mapping(source = "workingTime", target = "workingTime", qualifiedByName = "toUpperCase")
     @Mapping(source = "city", target = "location", qualifiedByName = "toUpperCase")
     @Mapping(source = "isOpenToHireUkrainians", target = "openToHireUkrainians")
+    @Mapping(source = "allSkills", target = "technologies")
+    @Mapping(source = "languages", target = "language", qualifiedByName = "mapLanguage")
     JobOfferRequestTO map(JustJoinItOffer src);
 
     @Named("toUpperCase")
     default String toUpperCase(String value) {
         return value == null ? null : value.toUpperCase();
+    }
+
+    @Named("mapLanguage")
+    default String mapLanguage(List<JustJoinItLanguage> languages) {
+        return languages.stream()
+                .max(Comparator.comparing(JustJoinItLanguage::getLevel))
+                .map(JustJoinItLanguage::getCode)
+                .map(String::toUpperCase)
+                .orElse(null);
     }
 
     @AfterMapping

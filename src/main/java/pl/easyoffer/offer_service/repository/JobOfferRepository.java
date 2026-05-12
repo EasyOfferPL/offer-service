@@ -1,13 +1,12 @@
 package pl.easyoffer.offer_service.repository;
 
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
-import pl.easyoffer.offer_service.repository.projection.TechnologyCountProjection;
+
+import java.util.Optional;
 
 public interface JobOfferRepository extends JpaRepository<JobOfferEntity, Long>, JpaSpecificationExecutor<JobOfferEntity> {
 
@@ -20,7 +19,7 @@ public interface JobOfferRepository extends JpaRepository<JobOfferEntity, Long>,
               AND lower(jo.companyName) = lower(:companyName)
               AND ((:location IS NULL AND jo.location IS NULL) OR lower(jo.location) = lower(:location))
             """)
-    Optional<JobOfferEntity> findDuplicateByCoreFields(
+    Optional<JobOfferEntity> findByCoreFields(
             @Param("title") String title,
             @Param("companyName") String companyName,
             @Param("location") String location

@@ -37,7 +37,7 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
                 .map(TheProtocolCategoryType::getTechnologyName)
                 .toList());
         saveAll(offersJson);
-        log.info("TheProtocolIt synchronizer - end size: {}", offersJson.size());
+        log.info("TheProtocolIt synchronizer - end size={}", offersJson.size());
     }
 
     private List<TheProtocolOffer> fetchOffers(List<String> categories) {

@@ -3,6 +3,7 @@ package pl.easyoffer.offer_service.model.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import pl.easyoffer.offer_service.model.JobOfferSourceType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -63,7 +64,7 @@ public class JobOfferEntity extends AbstractAuditingEntity<Long> {
     private String currency;
 
     @Column(name = "SOURCE", length = 100)
-    private String source;
+    private String source = JobOfferSourceType.MANUAL.name();
 
     @Column(name = "URL", length = 1000)
     private String url;

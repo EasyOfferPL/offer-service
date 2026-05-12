@@ -4,4 +4,8 @@ public interface OfferSynchronizer {
 
     void synchronize();
 
+    default String getClassName() {
+        return this.getClass().getSimpleName();
+    }
+
 }

@@ -1,6 +1,5 @@
 package pl.easyoffer.offer_service.service.persistence;
 
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,7 +7,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
 import pl.easyoffer.offer_service.repository.JobOfferRepository;
-import pl.easyoffer.offer_service.repository.projection.TechnologyCountProjection;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,8 +36,8 @@ public class JobOfferPersistenceService {
         return jobOfferRepository.findByExternalId(externalId);
     }
 
-    public Optional<JobOfferEntity> findDuplicateByCoreFields(String title, String companyName, String location) {
-        return jobOfferRepository.findDuplicateByCoreFields(title, companyName, location);
+    public Optional<JobOfferEntity> findByCoreFields(String title, String companyName, String location) {
+        return jobOfferRepository.findByCoreFields(title, companyName, location);
     }
 
 }

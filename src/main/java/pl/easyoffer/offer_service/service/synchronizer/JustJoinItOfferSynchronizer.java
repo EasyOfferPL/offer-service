@@ -7,16 +7,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
 import pl.easyoffer.offer_service.mapper.JustJoinItOfferMapper;
-import pl.easyoffer.offer_service.mapper.TechnologyMapper;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
 import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItCategoryType;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItLanguage;
 import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
 import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOfferData;
 import pl.easyoffer.offer_service.service.JobOfferService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -42,7 +43,7 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
                 .flatMap(Collection::stream)
                 .toList();
         save(offers);
-        log.info("JustJoinIt synchronizer - end");
+        log.info("JustJoinIt synchronizer - end, size={}", offers.size());
     }
 
     private List<JustJoinItOffer> fetchOffers(String category) {
@@ -61,16 +62,8 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     private void save(List<JustJoinItOffer> offers) {
         offers.stream()
                 .map(offer -> {
-                    //todo move to mapper
                     JobOfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
-                    mappedOffer.setTechnologies(TechnologyMapper.INSTANCE.map(offer.getAllSkills()));
-                    mappedOffer.setLanguage(offer.getLanguages().stream()
-                            .max(Comparator.comparing(JustJoinItLanguage::getLevel))
-                            .map(JustJoinItLanguage::getCode)
-                            .map(String::toUpperCase)
-                            .orElse(null)
-                    );
                     mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.name());
                     return mappedOffer;
                 })

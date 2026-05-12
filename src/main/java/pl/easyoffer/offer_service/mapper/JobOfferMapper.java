@@ -36,7 +36,7 @@ public interface JobOfferMapper {
 
     @AfterMapping
     default void normalizeRequest(@MappingTarget JobOfferRequestTO request) {
-        //todo
+        //todo create normalizer
         request.setExternalId(trimToNull(request.getExternalId()));
         request.setTitle(trimToNull(request.getTitle()));
         request.setCompanyName(trimToNull(request.getCompanyName()));
