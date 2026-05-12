@@ -40,4 +40,4 @@ service:
 
 feature:
   just-join-it-synchronizer-enabled: false
-  the-protocol-it-synchronizer-enabled: true
+  the-protocol-it-synchronizer-enabled: false
