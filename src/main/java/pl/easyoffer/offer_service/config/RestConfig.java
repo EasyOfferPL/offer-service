@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
+import pl.easyoffer.offer_service.client.nofluffjobs.NofluffjobsClient;
 
 @Configuration
 public class RestConfig {
@@ -26,5 +27,18 @@ public class RestConfig {
                 .decoder(new JacksonDecoder(mapper))
                 .logLevel(Logger.Level.BASIC)
                 .target(JustJoinItClient.class, url);
+    }
+
+    @Bean
+    public NofluffjobsClient nofluffjobsClient(@Value("${service.nofluffjobs-service}") String url) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        return Feign.builder()
+                .encoder(new JacksonEncoder(mapper))
+                .decoder(new JacksonDecoder(mapper))
+                .logLevel(Logger.Level.BASIC)
+                .target(NofluffjobsClient.class, url);
     }
 }

@@ -7,3 +7,5 @@
 [EO-4] Add TheProtocolIt integration
 
 [EO-5] Add Docker file
+
+[EO-6] Add Nofluffjobs integration

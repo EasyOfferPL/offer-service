@@ -37,6 +37,7 @@ logging:
 service:
   justJoinIt-service: "https://justjoin.it/"
   theProtocolIt-service: "https://theprotocol.it/"
+  nofluffjobs-service: "https://nofluffjobs.com/"
 
 feature:
   just-join-it-synchronizer-enabled: false
