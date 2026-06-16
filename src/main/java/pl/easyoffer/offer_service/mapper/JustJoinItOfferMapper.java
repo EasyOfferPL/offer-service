@@ -2,14 +2,14 @@ package pl.easyoffer.offer_service.mapper;
 
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
-import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItLanguage;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
+import pl.easyoffer.offer_service.model.to.OfferRequestTO;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItLanguage;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOffer;
 
 import java.util.Comparator;
 import java.util.List;
 
-import static pl.easyoffer.offer_service.model.dto.justjoinit.CurrencySourceType.ORIGINAL;
+import static pl.easyoffer.offer_service.model.to.justjoinit.CurrencySourceType.ORIGINAL;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = TechnologyMapper.class)
 public interface JustJoinItOfferMapper {
@@ -25,7 +25,7 @@ public interface JustJoinItOfferMapper {
     @Mapping(source = "isOpenToHireUkrainians", target = "openToHireUkrainians")
     @Mapping(source = "allSkills", target = "technologies")
     @Mapping(source = "languages", target = "language", qualifiedByName = "mapLanguage")
-    JobOfferRequestTO map(JustJoinItOffer src);
+    OfferRequestTO map(JustJoinItOffer src);
 
     @Named("toUpperCase")
     default String toUpperCase(String value) {
@@ -42,7 +42,7 @@ public interface JustJoinItOfferMapper {
     }
 
     @AfterMapping
-    default void determineSalaryParameters(JustJoinItOffer src, @MappingTarget JobOfferRequestTO target) {
+    default void determineSalaryParameters(JustJoinItOffer src, @MappingTarget OfferRequestTO target) {
         src.getEmploymentTypes().stream()
                 .filter(employmentType ->
                         ORIGINAL.name().equalsIgnoreCase(employmentType.getCurrencySource()))

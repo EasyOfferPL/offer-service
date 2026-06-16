@@ -4,8 +4,8 @@ import feign.Body;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsPostingsWrapper;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsSearchCriteria;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsPostingsWrapper;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsSearchCriteria;
 
 public interface NofluffjobsClient {
 

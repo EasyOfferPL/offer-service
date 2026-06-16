@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.justjoinit.JustJoinItClient;
 import pl.easyoffer.offer_service.mapper.JustJoinItOfferMapper;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
-import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItCategoryType;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOffer;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOfferData;
-import pl.easyoffer.offer_service.service.JobOfferService;
+import pl.easyoffer.offer_service.model.to.OfferRequestTO;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItCategoryType;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOffer;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOfferData;
+import pl.easyoffer.offer_service.service.OfferService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +27,7 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
 
     private static final String JOB_OFFER_PATH = "job-offer/";
 
-    private final JobOfferService jobOfferService;
+    private final OfferService offerService;
     private final JustJoinItClient justJoinItClient;
 
     @Value("${service.justJoinIt-service}")
@@ -62,12 +62,12 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     private void save(List<JustJoinItOffer> offers) {
         offers.stream()
                 .map(offer -> {
-                    JobOfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
+                    OfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
                     mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.name());
                     return mappedOffer;
                 })
-                .forEach(jobOfferService::createOrUpdate);
+                .forEach(offerService::createOrUpdate);
     }
 
 }

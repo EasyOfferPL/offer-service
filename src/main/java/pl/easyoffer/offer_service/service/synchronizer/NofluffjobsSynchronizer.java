@@ -3,10 +3,10 @@ package pl.easyoffer.offer_service.service.synchronizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.nofluffjobs.NofluffjobsClient;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsCategoryType;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsPosting;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsPostingsWrapper;
-import pl.easyoffer.offer_service.model.dto.nofluffjobs.NofluffjobsSearchCriteria;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsCategoryType;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsPosting;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsPostingsWrapper;
+import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsSearchCriteria;
 
 import java.util.Arrays;
 import java.util.Collection;

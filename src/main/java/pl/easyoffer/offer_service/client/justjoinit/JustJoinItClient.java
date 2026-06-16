@@ -3,7 +3,7 @@ package pl.easyoffer.offer_service.client.justjoinit;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
-import pl.easyoffer.offer_service.model.dto.justjoinit.JustJoinItOfferData;
+import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOfferData;
 
 public interface JustJoinItClient {
 
