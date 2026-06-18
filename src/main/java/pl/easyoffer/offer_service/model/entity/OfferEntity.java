@@ -3,6 +3,7 @@ package pl.easyoffer.offer_service.model.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.util.Set;
                 @Index(name = "IDX_JOB_OFFER_LOCATION", columnList = "LOCATION")
         }
 )
+@FieldNameConstants
 public class OfferEntity extends AbstractAuditingEntity<Long> {
 
     @Id

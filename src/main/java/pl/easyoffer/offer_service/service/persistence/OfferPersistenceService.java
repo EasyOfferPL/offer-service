@@ -22,6 +22,10 @@ public class OfferPersistenceService {
         return offerRepository.findAll(pageable);
     }
 
+    public List<OfferEntity> findAll(Specification<OfferEntity> specification) {
+        return offerRepository.findAll(specification);
+    }
+
     public Optional<OfferEntity> findById(Long id) {
         return offerRepository.findById(id);
     }

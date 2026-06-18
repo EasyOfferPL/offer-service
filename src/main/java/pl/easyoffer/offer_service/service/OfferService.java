@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import pl.easyoffer.offer_service.exception.NotFoundException;
 import pl.easyoffer.offer_service.mapper.OfferMapper;
+import pl.easyoffer.offer_service.model.OfferSearchRequest;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.CategoryStatisticTO;
@@ -33,6 +34,30 @@ public class OfferService {
     private final OfferDuplicateFinder offerDuplicateFinder;
 
     @Transactional(readOnly = true)
+    public Page<OfferResponseTO> search(OfferSearchRequest offerSearchRequest, Pageable pageable) {
+        var specification = OfferSpecificationBuilder.builder()
+                .withIds(offerSearchRequest.getIds())
+                .withExternalIds(offerSearchRequest.getExternalIds())
+                .withTitles(offerSearchRequest.getTitles())
+                .withCompanyNames(offerSearchRequest.getCompanyNames())
+                .withLocations(offerSearchRequest.getLocations())
+                .withExperienceLevels(offerSearchRequest.getExperienceLevels())
+                .withEmploymentTypes(offerSearchRequest.getEmploymentTypes())
+                .withWorkModes(offerSearchRequest.getWorkModes())
+                .withSalaryBetween(offerSearchRequest.getSalaryFrom(), offerSearchRequest.getSalaryTo())
+                .withCurrencies(offerSearchRequest.getCurrencies())
+                .withSources(offerSearchRequest.getSources())
+                .withUrls(offerSearchRequest.getUrls())
+                .withLanguages(offerSearchRequest.getLanguages())
+                .withCreatedAtBetween(offerSearchRequest.getCreatedAtFrom(), offerSearchRequest.getCreatedAtTo())
+                .withUpdatedAtBetween(offerSearchRequest.getUpdatedAtFrom(), offerSearchRequest.getUpdatedAtTo())
+                .withTechnologies(offerSearchRequest.getTechnologies())
+                .build();
+        return offerPersistenceService.search(specification, pageable)
+                .map(OfferMapper.INSTANCE::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public Page<OfferResponseTO> getOffers(Pageable pageable) {
         return offerPersistenceService.findAll(pageable).map(OfferMapper.INSTANCE::toResponse);
     }
@@ -42,12 +67,6 @@ public class OfferService {
         OfferEntity offer = offerPersistenceService.findById(id)
                 .orElseThrow(() -> new NotFoundException("Offer not found for id: " + id));
         return OfferMapper.INSTANCE.toResponse(offer);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<OfferResponseTO> search(String technology, String location, String experienceLevel, Pageable pageable) {
-        return offerPersistenceService.search(OfferSpecificationBuilder.build(technology, location, experienceLevel), pageable)
-                .map(OfferMapper.INSTANCE::toResponse);
     }
 
     @Transactional(readOnly = true)
