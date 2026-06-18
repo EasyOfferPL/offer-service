@@ -6,7 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.easyoffer.offer_service.model.OfferSearchRequest;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.service.OfferService;
@@ -29,13 +31,9 @@ public class OfferController {
     }
 
     @GetMapping("/search")
-    public Page<OfferResponseTO> searchOffers(
-            @RequestParam(required = false) String technology,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String experienceLevel,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return offerService.search(technology, location, experienceLevel, pageable);
+    public ResponseEntity<Page<OfferResponseTO>> searchOffers(OfferSearchRequest offerSearchRequest,
+                                                              @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(offerService.search(offerSearchRequest, pageable));
     }
 
     @PostMapping
