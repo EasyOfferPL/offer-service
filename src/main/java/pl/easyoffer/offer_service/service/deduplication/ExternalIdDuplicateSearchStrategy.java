@@ -3,9 +3,9 @@ package pl.easyoffer.offer_service.service.deduplication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
-import pl.easyoffer.offer_service.model.entity.JobOfferEntity;
-import pl.easyoffer.offer_service.service.persistence.JobOfferPersistenceService;
+import pl.easyoffer.offer_service.model.entity.OfferEntity;
+import pl.easyoffer.offer_service.model.to.OfferRequestTO;
+import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 
 import java.util.Optional;
 
@@ -13,7 +13,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ExternalIdDuplicateSearchStrategy implements DuplicateSearchStrategy {
 
-    private final JobOfferPersistenceService jobOfferPersistenceService;
+    private final OfferPersistenceService offerPersistenceService;
 
     @Override
     public int priority() {
@@ -21,11 +21,11 @@ public class ExternalIdDuplicateSearchStrategy implements DuplicateSearchStrateg
     }
 
     @Override
-    public Optional<JobOfferEntity> find(JobOfferRequestTO request) {
+    public Optional<OfferEntity> find(OfferRequestTO request) {
         if (!StringUtils.hasText(request.getExternalId())) {
             return Optional.empty();
         }
-        return jobOfferPersistenceService.findByExternalId(request.getExternalId());
+        return offerPersistenceService.findByExternalId(request.getExternalId());
     }
 
 }

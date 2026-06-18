@@ -8,4 +8,6 @@
 
 [EO-5] Add Docker file
 
-[EO-6] Add Nofluffjobs integration
+[EO-6] Add Nofluffjobs integration | WIP
+
+[EO-7] Implement POC of statistics api 

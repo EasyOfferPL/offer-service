@@ -5,9 +5,9 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.springframework.util.CollectionUtils;
 import pl.easyoffer.offer_service.model.EuropeanCurrency;
-import pl.easyoffer.offer_service.model.dto.JobOfferRequestTO;
-import pl.easyoffer.offer_service.model.dto.TechnologyTO;
-import pl.easyoffer.offer_service.model.dto.theprotocolit.*;
+import pl.easyoffer.offer_service.model.to.OfferRequestTO;
+import pl.easyoffer.offer_service.model.to.TechnologyTO;
+import pl.easyoffer.offer_service.model.to.theprotocolit.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,7 +28,7 @@ public interface TheProtocolItMapper {
     @Mapping(source = "workModes", target = "workMode", qualifiedByName = "mapWorkModes")
     @Mapping(source = "publicationDateUtc", target = "publishedAt")
     @Mapping(source = "isSupportingUkraine", target = "openToHireUkrainians")
-    JobOfferRequestTO map(TheProtocolOffer src);
+    OfferRequestTO map(TheProtocolOffer src);
 
     @Named("toUpperCase")
     default String toUpperCase(String value) {
@@ -105,7 +105,7 @@ public interface TheProtocolItMapper {
     }
 
     @AfterMapping
-    default void determineSalaryParameters(TheProtocolOffer src, @MappingTarget JobOfferRequestTO target) {
+    default void determineSalaryParameters(TheProtocolOffer src, @MappingTarget OfferRequestTO target) {
         Optional.ofNullable(src.getSalary())
                 .ifPresent(salary -> {
                     target.setSalaryMin(salary.getFrom());

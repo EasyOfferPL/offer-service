@@ -12,8 +12,8 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClient;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClientManager;
-import pl.easyoffer.offer_service.model.dto.theprotocolit.TheProtocolOffer;
-import pl.easyoffer.offer_service.model.dto.theprotocolit.TheProtocolOfferData;
+import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolOffer;
+import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolOfferData;
 
 import java.util.ArrayList;
 import java.util.List;

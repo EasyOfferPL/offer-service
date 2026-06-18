@@ -1,6 +1,6 @@
 package pl.easyoffer.offer_service.client.theprotocolit;
 
-import pl.easyoffer.offer_service.model.dto.theprotocolit.TheProtocolOffer;
+import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolOffer;
 
 import java.util.List;
 
