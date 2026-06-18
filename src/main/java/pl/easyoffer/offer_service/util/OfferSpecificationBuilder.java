@@ -96,6 +96,14 @@ public final class OfferSpecificationBuilder {
         return this;
     }
 
+    public OfferSpecificationBuilder withSalaryUnits(List<String> salaryUnits) {
+        if (!CollectionUtils.isEmpty(salaryUnits)) {
+            wrapSpecification((root, query, criteriaBuilder) ->
+                    root.get(OfferEntity.Fields.salaryUnit).in(salaryUnits));
+        }
+        return this;
+    }
+
     public OfferSpecificationBuilder withCurrencies(List<String> currencies) {
         if (!CollectionUtils.isEmpty(currencies)) {
             wrapSpecification((root, query, criteriaBuilder) ->

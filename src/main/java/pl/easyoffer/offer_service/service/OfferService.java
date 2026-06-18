@@ -45,6 +45,7 @@ public class OfferService {
                 .withEmploymentTypes(offerSearchRequest.getEmploymentTypes())
                 .withWorkModes(offerSearchRequest.getWorkModes())
                 .withSalaryBetween(offerSearchRequest.getSalaryFrom(), offerSearchRequest.getSalaryTo())
+                .withSalaryUnits(offerSearchRequest.getSalaryUnits())
                 .withCurrencies(offerSearchRequest.getCurrencies())
                 .withSources(offerSearchRequest.getSources())
                 .withUrls(offerSearchRequest.getUrls())

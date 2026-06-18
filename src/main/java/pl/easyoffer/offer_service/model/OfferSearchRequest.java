@@ -1,5 +1,6 @@
 package pl.easyoffer.offer_service.model;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
 public class OfferSearchRequest {
 
     private List<Long> ids;
@@ -19,6 +21,7 @@ public class OfferSearchRequest {
     private List<String> workModes;
     private BigDecimal salaryFrom;
     private BigDecimal salaryTo;
+    private List<String> salaryUnits;
     private List<String> currencies;
     private List<String> sources;
     private List<String> urls;

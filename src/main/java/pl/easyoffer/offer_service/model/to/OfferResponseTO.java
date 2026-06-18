@@ -22,6 +22,7 @@ public class OfferResponseTO {
     private String workMode;
     private BigDecimal salaryMin;
     private BigDecimal salaryMax;
+    private String salaryUnit;
     private String currency;
     private String source;
     private String url;

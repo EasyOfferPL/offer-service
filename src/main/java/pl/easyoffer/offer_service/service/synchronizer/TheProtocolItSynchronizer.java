@@ -32,12 +32,10 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
 
     @Override
     public void synchronize() {
-        log.info("TheProtocolIt synchronizer - start");
         List<TheProtocolOffer> offersJson = fetchOffers(Arrays.stream(TheProtocolCategoryType.values())
                 .map(TheProtocolCategoryType::getTechnologyName)
                 .toList());
         saveAll(offersJson);
-        log.info("TheProtocolIt synchronizer - end size={}", offersJson.size());
     }
 
     private List<TheProtocolOffer> fetchOffers(List<String> categories) {

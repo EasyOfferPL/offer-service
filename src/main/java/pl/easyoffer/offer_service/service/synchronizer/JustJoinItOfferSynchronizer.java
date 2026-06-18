@@ -35,7 +35,6 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
 
     @Override
     public void synchronize() {
-        log.info("JustJoinIt synchronizer - start");
         List<JustJoinItOffer> offers = Arrays.stream(JustJoinItCategoryType.values())
                 .map(Enum::name)
                 .map(String::toLowerCase)
@@ -43,7 +42,6 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
                 .flatMap(Collection::stream)
                 .toList();
         save(offers);
-        log.info("JustJoinIt synchronizer - end, size={}", offers.size());
     }
 
     private List<JustJoinItOffer> fetchOffers(String category) {
