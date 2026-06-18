@@ -60,6 +60,14 @@ public final class OfferSpecificationBuilder {
         return this;
     }
 
+    public OfferSpecificationBuilder withCategoryNames(List<String> categoryNames) {
+        if (!CollectionUtils.isEmpty(categoryNames)) {
+            wrapSpecification((root, query, criteriaBuilder) ->
+                    root.get(OfferEntity.Fields.category).in(categoryNames));
+        }
+        return this;
+    }
+
     public OfferSpecificationBuilder withExperienceLevels(List<String> experienceLevels) {
         if (!CollectionUtils.isEmpty(experienceLevels)) {
             wrapSpecification((root, query, criteriaBuilder) ->
