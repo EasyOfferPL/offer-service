@@ -7,9 +7,9 @@ import java.util.List;
 
 @Data
 @Builder
-public class StatisticTO {
+public class AnalyticsTO {
 
-    private List<CategoryStatisticTO> categoriesStatistic;
+    private List<CategoryAnalyticsTO> categoriesStatistic;
     private List<OfferResponseTO> newestJobOffers;
 
 }

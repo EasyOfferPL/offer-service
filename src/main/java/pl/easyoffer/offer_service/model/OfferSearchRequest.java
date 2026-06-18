@@ -18,6 +18,7 @@ public class OfferSearchRequest {
     private List<String> locations;
     private List<String> experienceLevels;
     private List<String> employmentTypes;
+    private List<String> categoryNames;
     private List<String> workModes;
     private BigDecimal salaryFrom;
     private BigDecimal salaryTo;

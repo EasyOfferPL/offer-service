@@ -1,8 +1,10 @@
 package pl.easyoffer.offer_service.service;
 
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -11,7 +13,6 @@ import pl.easyoffer.offer_service.mapper.OfferMapper;
 import pl.easyoffer.offer_service.model.OfferSearchRequest;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
-import pl.easyoffer.offer_service.model.to.CategoryStatisticTO;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.service.deduplication.OfferDuplicateFinder;
@@ -34,26 +35,16 @@ public class OfferService {
     private final OfferDuplicateFinder offerDuplicateFinder;
 
     @Transactional(readOnly = true)
-    public Page<OfferResponseTO> search(OfferSearchRequest offerSearchRequest, Pageable pageable) {
-        var specification = OfferSpecificationBuilder.builder()
-                .withIds(offerSearchRequest.getIds())
-                .withExternalIds(offerSearchRequest.getExternalIds())
-                .withTitles(offerSearchRequest.getTitles())
-                .withCompanyNames(offerSearchRequest.getCompanyNames())
-                .withLocations(offerSearchRequest.getLocations())
-                .withExperienceLevels(offerSearchRequest.getExperienceLevels())
-                .withEmploymentTypes(offerSearchRequest.getEmploymentTypes())
-                .withWorkModes(offerSearchRequest.getWorkModes())
-                .withSalaryBetween(offerSearchRequest.getSalaryFrom(), offerSearchRequest.getSalaryTo())
-                .withSalaryUnits(offerSearchRequest.getSalaryUnits())
-                .withCurrencies(offerSearchRequest.getCurrencies())
-                .withSources(offerSearchRequest.getSources())
-                .withUrls(offerSearchRequest.getUrls())
-                .withLanguages(offerSearchRequest.getLanguages())
-                .withCreatedAtBetween(offerSearchRequest.getCreatedAtFrom(), offerSearchRequest.getCreatedAtTo())
-                .withUpdatedAtBetween(offerSearchRequest.getUpdatedAtFrom(), offerSearchRequest.getUpdatedAtTo())
-                .withTechnologies(offerSearchRequest.getTechnologies())
-                .build();
+    public List<OfferResponseTO> search(OfferSearchRequest offerSearchRequest) {
+        var specification = builSpecification(offerSearchRequest);
+        return offerPersistenceService.search(specification).stream()
+                .map(OfferMapper.INSTANCE::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OfferResponseTO> search(OfferSearchRequest offerSearchRequest, @Nullable Pageable pageable) {
+        var specification = builSpecification(offerSearchRequest);
         return offerPersistenceService.search(specification, pageable)
                 .map(OfferMapper.INSTANCE::toResponse);
     }
@@ -68,18 +59,6 @@ public class OfferService {
         OfferEntity offer = offerPersistenceService.findById(id)
                 .orElseThrow(() -> new NotFoundException("Offer not found for id: " + id));
         return OfferMapper.INSTANCE.toResponse(offer);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CategoryStatisticTO> getCategoryStatistics(Pageable pageable) {
-        return Optional.ofNullable(offerPersistenceService.getCategoryStatistics(pageable))
-                .orElseGet(List::of)
-                .stream()
-                .map(rawCategoryStatistic -> CategoryStatisticTO.builder()
-                        .categoryName(rawCategoryStatistic.getCategoryName())
-                        .offersCount(rawCategoryStatistic.getOfferCount())
-                        .build())
-                .toList();
     }
 
     @Transactional
@@ -112,6 +91,29 @@ public class OfferService {
                     technologyEntity.setLevel(level);
                     return technologyPersistenceService.save(technologyEntity);
                 });
+    }
+
+    private static Specification<OfferEntity> builSpecification(OfferSearchRequest offerSearchRequest) {
+        return OfferSpecificationBuilder.builder()
+                .withIds(offerSearchRequest.getIds())
+                .withExternalIds(offerSearchRequest.getExternalIds())
+                .withTitles(offerSearchRequest.getTitles())
+                .withCompanyNames(offerSearchRequest.getCompanyNames())
+                .withLocations(offerSearchRequest.getLocations())
+                .withCategoryNames(offerSearchRequest.getCategoryNames())
+                .withExperienceLevels(offerSearchRequest.getExperienceLevels())
+                .withEmploymentTypes(offerSearchRequest.getEmploymentTypes())
+                .withWorkModes(offerSearchRequest.getWorkModes())
+                .withSalaryBetween(offerSearchRequest.getSalaryFrom(), offerSearchRequest.getSalaryTo())
+                .withSalaryUnits(offerSearchRequest.getSalaryUnits())
+                .withCurrencies(offerSearchRequest.getCurrencies())
+                .withSources(offerSearchRequest.getSources())
+                .withUrls(offerSearchRequest.getUrls())
+                .withLanguages(offerSearchRequest.getLanguages())
+                .withCreatedAtBetween(offerSearchRequest.getCreatedAtFrom(), offerSearchRequest.getCreatedAtTo())
+                .withUpdatedAtBetween(offerSearchRequest.getUpdatedAtFrom(), offerSearchRequest.getUpdatedAtTo())
+                .withTechnologies(offerSearchRequest.getTechnologies())
+                .build();
     }
 
 }
