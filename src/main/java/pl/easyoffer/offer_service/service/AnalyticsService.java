@@ -5,11 +5,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.easyoffer.offer_service.exception.ValidationException;
 import pl.easyoffer.offer_service.model.OfferSearchRequest;
-import pl.easyoffer.offer_service.model.to.CategoryAnalyticsTO;
-import pl.easyoffer.offer_service.model.to.OfferResponseTO;
-import pl.easyoffer.offer_service.model.to.TechnologiesAnalyticsTO;
-import pl.easyoffer.offer_service.model.to.TechnologyTrendTO;
+import pl.easyoffer.offer_service.model.SalaryUnit;
+import pl.easyoffer.offer_service.model.entity.OfferEntity;
+import pl.easyoffer.offer_service.model.to.*;
+import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class AnalyticsService {
 
     private final OfferService offerService;
     private final OfferPersistenceService offerPersistenceService;
+    private final SalaryAnalyticsCalculator salaryAnalyticsCalculator;
 
     public List<OfferResponseTO> retrieveNewestOffers() {
         OfferSearchRequest searchRequest = OfferSearchRequest.builder()
@@ -96,6 +98,42 @@ public class AnalyticsService {
                         .count(entry.getValue())
                         .build())
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SalaryAnalyticsTO getSalaryAnalytics(String categoryName, String experienceLevel) {
+        List<OfferEntity> offers = offerPersistenceService.findForSalaryAnalytics(categoryName, experienceLevel);
+
+        return SalaryAnalyticsTO.builder()
+                .byCategory(salaryAnalyticsCalculator.calculateByCategory(offers))
+                .byExperienceLevel(salaryAnalyticsCalculator.calculateByExperienceLevel(offers))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SalaryTrendTO getSalaryTrend(
+            String categoryName,
+            String currency,
+            String employmentType,
+            String experienceLevel,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        if (dateFrom.isAfter(dateTo)) {
+            throw new ValidationException("dateFrom must not be after dateTo");
+        }
+
+        List<OfferEntity> offers = offerPersistenceService.findForSalaryTrend(
+                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+        );
+        return SalaryTrendTO.builder()
+                .categoryName(categoryName)
+                .currency(currency)
+                .employmentType(employmentType)
+                .experienceLevel(experienceLevel)
+                .salaryUnit(SalaryUnit.MONTH.name())
+                .points(salaryAnalyticsCalculator.calculateMonthlyTrend(offers, dateFrom, dateTo))
+                .build();
     }
 
     private LocalDateTime getPublicationDate(OfferResponseTO offer) {

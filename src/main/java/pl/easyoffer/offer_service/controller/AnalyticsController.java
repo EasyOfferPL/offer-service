@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import pl.easyoffer.offer_service.model.to.AnalyticsTO;
-import pl.easyoffer.offer_service.model.to.TechnologiesAnalyticsTO;
-import pl.easyoffer.offer_service.model.to.TechnologyTrendTO;
+import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.service.AnalyticsService;
 
 import java.time.LocalDateTime;
@@ -45,6 +43,28 @@ public class AnalyticsController {
             @RequestParam LocalDateTime dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getTechnologyTrend(categoryName, dateFrom, dateTo));
+    }
+
+    @GetMapping("/salaries")
+    public ResponseEntity<SalaryAnalyticsTO> getSalaryAnalytics(
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String experienceLevel
+    ) {
+        return ResponseEntity.ok(analyticsService.getSalaryAnalytics(categoryName, experienceLevel));
+    }
+
+    @GetMapping("/salaries/trend")
+    public ResponseEntity<SalaryTrendTO> getSalaryTrend(
+            @RequestParam String categoryName,
+            @RequestParam String currency,
+            @RequestParam String employmentType,
+            @RequestParam(required = false) String experienceLevel,
+            @RequestParam LocalDateTime dateFrom,
+            @RequestParam LocalDateTime dateTo
+    ) {
+        return ResponseEntity.ok(analyticsService.getSalaryTrend(
+                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+        ));
     }
 
 }
