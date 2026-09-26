@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class CategoryStatisticTO {
+public class CategoryAnalyticsTO {
 
     private String categoryName;
     private Long offersCount;
