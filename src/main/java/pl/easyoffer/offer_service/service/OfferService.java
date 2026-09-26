@@ -113,6 +113,7 @@ public class OfferService {
                 .withCreatedAtBetween(offerSearchRequest.getCreatedAtFrom(), offerSearchRequest.getCreatedAtTo())
                 .withUpdatedAtBetween(offerSearchRequest.getUpdatedAtFrom(), offerSearchRequest.getUpdatedAtTo())
                 .withTechnologies(offerSearchRequest.getTechnologies())
+                .withPublishedAtBetween(offerSearchRequest.getPublishedAtFrom(), offerSearchRequest.getPublishedAtTo())
                 .build();
     }
 

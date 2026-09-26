@@ -32,5 +32,7 @@ public class OfferSearchRequest {
     private LocalDateTime updatedAtFrom;
     private LocalDateTime updatedAtTo;
     private List<String> technologies;
+    private LocalDateTime publishedAtFrom;
+    private LocalDateTime publishedAtTo;
 
 }
