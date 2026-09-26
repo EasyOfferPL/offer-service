@@ -35,10 +35,11 @@ logging:
     pl.easyoffer.offer_service: INFO
 
 service:
-  justJoinIt-service: "https://justjoin.it/"
-  theProtocolIt-service: "https://theprotocol.it/"
-  nofluffjobs-service: "https://nofluffjobs.com/"
+  justJoinIt-service: ${JUSTJOINIT_SERVICE_URL:"https://justjoin.it/"}
+  theProtocolIt-service: ${THEPROTOCOLIT_SERVICE_URL:"https://theprotocol.it/"}
+  nofluffjobs-service: ${NOFLUFFJOBS_SERVICE_URL:"https://nofluffjobs.com/"}
 
 feature:
-  just-join-it-synchronizer-enabled: false
-  the-protocol-it-synchronizer-enabled: false
+  just-join-it-synchronizer-enabled: ${JUST_JOIN_IT_SYNCHRONIZER_ENABLED:true}
+  the-protocol-it-synchronizer-enabled: ${THE_PROTOCOL_IT_SYNCHRONIZER_ENABLED:true}
+  nofluffjobs-synchronizer-enabled: ${NOFLUFFJOBS_SYNCHRONIZER_ENABLED:true}

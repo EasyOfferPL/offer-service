@@ -1,6 +1,7 @@
 package pl.easyoffer.offer_service.service.synchronizer;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.nofluffjobs.NofluffjobsClient;
 import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsCategoryType;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "feature.nofluffjobs-synchronizer-enabled", havingValue = "true")
 public class NofluffjobsSynchronizer implements OfferSynchronizer {
 
     private final NofluffjobsClient nofluffjobsClient;
