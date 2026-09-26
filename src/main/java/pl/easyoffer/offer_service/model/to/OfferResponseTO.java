@@ -30,5 +30,6 @@ public class OfferResponseTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<String> technologies;
+    private LocalDateTime publishedAt;
 
 }

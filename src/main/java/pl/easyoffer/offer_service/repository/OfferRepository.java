@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
+import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
 
 import java.util.List;
@@ -29,11 +30,18 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
     );
 
     @Query(value = """
-                 select oe.category as categoryName, count(oe) as offerCount
-                 from OfferEntity oe
-                 group by oe.category
-                 order by count(oe) desc
+             SELECT oe.category AS categoryName, count(oe) AS offerCount
+             FROM OfferEntity oe
+             GROUP BY oe.category
+             ORDER BY count(oe) DESC
             """)
     List<CategoryStatisticProjection> getCategoryStatistics(Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT oe.category AS categoryName
+            FROM OfferEntity oe
+            WHERE oe.category IS NOT NULL
+    """)
+    List<CategoryProjection> getCategories();
 
 }

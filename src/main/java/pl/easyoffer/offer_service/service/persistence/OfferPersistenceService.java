@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.OfferRepository;
+import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
 
 import java.util.List;
@@ -48,6 +49,10 @@ public class OfferPersistenceService {
 
     public List<CategoryStatisticProjection> getCategoryStatistics(Pageable pageable) {
         return offerRepository.getCategoryStatistics(pageable);
+    }
+
+    public List<CategoryProjection> getCategories() {
+        return offerRepository.getCategories();
     }
 
 }

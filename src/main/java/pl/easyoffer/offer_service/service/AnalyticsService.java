@@ -9,12 +9,12 @@ import pl.easyoffer.offer_service.model.OfferSearchRequest;
 import pl.easyoffer.offer_service.model.to.CategoryAnalyticsTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.model.to.TechnologiesAnalyticsTO;
+import pl.easyoffer.offer_service.model.to.TechnologyTrendTO;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.time.YearMonth;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -68,6 +68,38 @@ public class AnalyticsService {
                         .offersCount(rawCategoryStatistic.getOfferCount())
                         .build())
                 .toList();
+    }
+
+    public List<TechnologyTrendTO> getTechnologyTrend(
+            String categoryName,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        OfferSearchRequest searchRequest = OfferSearchRequest.builder()
+                .categoryNames(List.of(categoryName))
+                .build();
+
+        return offerService.search(searchRequest).stream()
+                .filter(offer -> {
+                    LocalDateTime date = getPublicationDate(offer);
+                    return !date.isBefore(from) && !date.isAfter(to);
+                })
+                .collect(Collectors.groupingBy(
+                        offer -> YearMonth.from(getPublicationDate(offer)),
+                        TreeMap::new,
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .map(entry -> TechnologyTrendTO.builder()
+                        .month(entry.getKey().toString())
+                        .count(entry.getValue())
+                        .build())
+                .toList();
+    }
+
+    private LocalDateTime getPublicationDate(OfferResponseTO offer) {
+        return Objects.nonNull(offer.getPublishedAt()) ? offer.getPublishedAt() : offer.getCreatedAt();
     }
 
 }

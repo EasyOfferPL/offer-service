@@ -14,7 +14,7 @@ public enum TheProtocolCategoryType {
     AWS("AWS", "DEVOPS"),
     ANGULAR("Angular"),
     ANDROID("Android", "MOBILE"),
-    DOTNET(".NET"),
+    DOTNET(".NET", "NET"),
     GO("Go"),
     IOS("iOS", "MOBILE"),
     JAVASCRIPT("JavaScript"),
@@ -22,7 +22,7 @@ public enum TheProtocolCategoryType {
     AZURE("Microsoft Azure", "DEVOPS"),
     PHP("PHP"),
     PYTHON("Python"),
-    REACT("React.js"),
+    REACT("React.js", "JAVASCRIPT"),
     TYPESCRIPT("TypeScript");
 
     private final String technologyName;

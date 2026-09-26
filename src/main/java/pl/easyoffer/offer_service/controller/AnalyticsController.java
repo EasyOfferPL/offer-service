@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.easyoffer.offer_service.model.to.AnalyticsTO;
 import pl.easyoffer.offer_service.model.to.TechnologiesAnalyticsTO;
+import pl.easyoffer.offer_service.model.to.TechnologyTrendTO;
 import pl.easyoffer.offer_service.service.AnalyticsService;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,15 @@ public class AnalyticsController {
             @RequestParam LocalDateTime dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getTechnologiesAnalytics(categoryName, dateFrom, dateTo));
+    }
+
+    @GetMapping("/technologies/trend")
+    public ResponseEntity<List<TechnologyTrendTO>> getTechnologyTrend(
+            @RequestParam String categoryName,
+            @RequestParam LocalDateTime dateFrom,
+            @RequestParam LocalDateTime dateTo
+    ) {
+        return ResponseEntity.ok(analyticsService.getTechnologyTrend(categoryName, dateFrom, dateTo));
     }
 
 }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.CollectionUtils;
 import pl.easyoffer.offer_service.model.entity.AbstractAuditingEntity;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
+import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -175,7 +176,23 @@ public final class OfferSpecificationBuilder {
     public OfferSpecificationBuilder withTechnologies(List<String> technologies) {
         if (!CollectionUtils.isEmpty(technologies)) {
             wrapSpecification((root, query, criteriaBuilder) ->
-                    root.get(OfferEntity.Fields.technologies).in(technologies));
+                    root.join(OfferEntity.Fields.technologies)
+                            .get(TechnologyEntity.Fields.name)
+                            .in(technologies));
+        }
+        return this;
+    }
+
+    public OfferSpecificationBuilder withPublishedAtBetween(LocalDateTime from, LocalDateTime to) {
+        if (Objects.nonNull(from) && Objects.nonNull(to)) {
+            wrapSpecification((root, query, criteriaBuilder) ->
+                    criteriaBuilder.between(root.get(OfferEntity.Fields.publishedAt), from, to));
+        } else if (Objects.nonNull(from)) {
+            wrapSpecification((root, query, criteriaBuilder) ->
+                    criteriaBuilder.greaterThanOrEqualTo(root.get(OfferEntity.Fields.publishedAt), from));
+        } else if (Objects.nonNull(to)) {
+            wrapSpecification((root, query, criteriaBuilder) ->
+                    criteriaBuilder.lessThanOrEqualTo(root.get(OfferEntity.Fields.publishedAt), to));
         }
         return this;
     }
