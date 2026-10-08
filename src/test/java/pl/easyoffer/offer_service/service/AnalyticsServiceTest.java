@@ -1,5 +1,6 @@
 package pl.easyoffer.offer_service.service;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,14 +43,17 @@ class AnalyticsServiceTest {
 
     @Test
     void shouldCalculateAverageAndOddMedianFromSalaryRanges() {
+        // given
         when(offerPersistenceService.findForSalaryAnalytics(null, null)).thenReturn(List.of(
                 offer("Java", "Mid", "10000", "14000"),
                 offer("Java", "Mid", "14000", "18000"),
                 offer("Java", "Mid", "18000", "22000")
         ));
 
+        // when
         SalaryStatisticTO result = analyticsService.getSalaryAnalytics(null, null).getByCategory().getFirst();
 
+        // then
         assertThat(result.getAverageSalary()).isEqualByComparingTo("16000.00");
         assertThat(result.getMedianSalary()).isEqualByComparingTo("16000.00");
         assertThat(result.getOffersCount()).isEqualTo(3);
@@ -57,13 +61,16 @@ class AnalyticsServiceTest {
 
     @Test
     void shouldCalculateEvenMedianAndUseAvailableSalaryBoundary() {
+        // given
         when(offerPersistenceService.findForSalaryAnalytics(null, null)).thenReturn(List.of(
                 offer("Java", "Senior", "10000", null),
                 offer("Java", "Senior", null, "14000")
         ));
 
+        // when
         SalaryStatisticTO result = analyticsService.getSalaryAnalytics(null, null).getByExperienceLevel().getFirst();
 
+        // then
         assertThat(result.getAverageSalary()).isEqualByComparingTo("12000.00");
         assertThat(result.getMedianSalary()).isEqualByComparingTo("12000.00");
         assertThat(result.getOffersCount()).isEqualTo(2);
@@ -71,12 +78,15 @@ class AnalyticsServiceTest {
 
     @Test
     void shouldPassCategoryAndExperienceFilters() {
+        // given
         when(offerPersistenceService.findForSalaryAnalytics("Backend", "Senior")).thenReturn(List.of(
                 offer("Backend", "Senior", "10000", "14000")
         ));
 
+        // when
         SalaryAnalyticsTO result = analyticsService.getSalaryAnalytics("Backend", "Senior");
 
+        // then
         verify(offerPersistenceService).findForSalaryAnalytics("Backend", "Senior");
         assertThat(result.getByCategory()).extracting(SalaryStatisticTO::getGroupValue)
                 .containsExactly("Backend");
@@ -86,28 +96,35 @@ class AnalyticsServiceTest {
 
     @Test
     void shouldIgnoreOffersWithoutSalaryAndReturnEmptyListsWhenNoUsableDataExists() {
+        // given
         when(offerPersistenceService.findForSalaryAnalytics(null, null)).thenReturn(List.of(
                 offer("Java", "Junior", null, null)
         ));
 
+        // when
         SalaryAnalyticsTO result = analyticsService.getSalaryAnalytics(null, null);
 
+        // then
         assertThat(result.getByCategory()).isEmpty();
         assertThat(result.getByExperienceLevel()).isEmpty();
     }
 
     @Test
     void shouldReturnEmptyListsWhenNoOffersMatchFilters() {
+        // given
         when(offerPersistenceService.findForSalaryAnalytics("Rust", "Junior")).thenReturn(List.of());
 
+        // when
         SalaryAnalyticsTO result = analyticsService.getSalaryAnalytics("Rust", "Junior");
 
+        // then
         assertThat(result.getByCategory()).isEmpty();
         assertThat(result.getByExperienceLevel()).isEmpty();
     }
 
     @Test
     void shouldNotMixCurrenciesSalaryUnitsOrEmploymentTypes() {
+        // given
         OfferEntity plnMonthlyB2b = offer("Java", "Mid", "10000", "12000");
         OfferEntity eurMonthlyB2b = offer("Java", "Mid", "3000", "4000");
         eurMonthlyB2b.setCurrency("EUR");
@@ -119,14 +136,17 @@ class AnalyticsServiceTest {
                 plnMonthlyB2b, eurMonthlyB2b, plnHourlyB2b, plnMonthlyEmployment
         ));
 
+        // when
         SalaryAnalyticsTO result = analyticsService.getSalaryAnalytics(null, null);
 
+        // then
         assertThat(result.getByCategory()).hasSize(4);
         assertThat(result.getByCategory()).allMatch(statistic -> statistic.getOffersCount() == 1);
     }
 
     @Test
     void shouldNormalizeSalariesAndBuildContinuousMonthlyTrend() {
+        // given
         LocalDateTime dateFrom = LocalDateTime.of(2026, 1, 1, 0, 0);
         LocalDateTime dateTo = LocalDateTime.of(2026, 3, 31, 23, 59);
         List<OfferEntity> offers = List.of(
@@ -139,10 +159,12 @@ class AnalyticsServiceTest {
                 "Java", "PLN", "b2b", "Senior", dateFrom, dateTo
         )).thenReturn(offers);
 
+        // when
         SalaryTrendTO result = analyticsService.getSalaryTrend(
                 "Java", "PLN", "b2b", "Senior", dateFrom, dateTo
         );
 
+        // then
         assertThat(result.getSalaryUnit()).isEqualTo("MONTH");
         assertThat(result.getPoints()).hasSize(3);
         assertThat(result.getPoints().getFirst().getMonth()).isEqualTo("2026-01");
@@ -156,12 +178,17 @@ class AnalyticsServiceTest {
 
     @Test
     void shouldRejectInvalidSalaryTrendDateRange() {
+        // given
         LocalDateTime dateFrom = LocalDateTime.of(2026, 2, 1, 0, 0);
         LocalDateTime dateTo = LocalDateTime.of(2026, 1, 1, 0, 0);
 
-        assertThatThrownBy(() -> analyticsService.getSalaryTrend(
+        // when
+        ThrowingCallable action = () -> analyticsService.getSalaryTrend(
                 "Java", "PLN", "b2b", null, dateFrom, dateTo
-        )).isInstanceOf(ValidationException.class);
+        );
+
+        // then
+        assertThatThrownBy(action).isInstanceOf(ValidationException.class);
     }
 
     private OfferEntity offer(String technology, String experienceLevel, String salaryMin, String salaryMax) {
