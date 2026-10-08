@@ -10,6 +10,7 @@ import pl.easyoffer.offer_service.repository.OfferRepository;
 import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +54,23 @@ public class OfferPersistenceService {
 
     public List<CategoryProjection> getCategories() {
         return offerRepository.getCategories();
+    }
+
+    public List<OfferEntity> findForSalaryAnalytics(String categoryName, String experienceLevel) {
+        return offerRepository.findForSalaryAnalytics(categoryName, experienceLevel);
+    }
+
+    public List<OfferEntity> findForSalaryTrend(
+            String categoryName,
+            String currency,
+            String employmentType,
+            String experienceLevel,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        return offerRepository.findForSalaryTrend(
+                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+        );
     }
 
 }
