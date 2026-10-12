@@ -4,12 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StopWatch;
 import pl.easyoffer.offer_service.service.synchronizer.OfferSynchronizer;
 
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @Slf4j
 @Component
@@ -18,21 +17,37 @@ public class OfferSyncScheduler {
 
     private final List<OfferSynchronizer> offerSynchronizers;
 
-    @Scheduled(initialDelay = 0/*, cron = "0 0 4 * * *"*/)
-    private void synchronizeOffers() {
+    @Scheduled(
+            cron = "${scheduler.offer-synchronization.cron}",
+            zone = "${scheduler.offer-synchronization.zone}"
+    )
+    void synchronizeOffers() {
         log.info("Synchronizing offers - start");
-        StopWatch totalWatch = new StopWatch("offer-synchronization");
-        totalWatch.start();
+        long synchronizationStartedAt = System.nanoTime();
+        int successfulSynchronizations = 0;
+        int failedSynchronizations = 0;
+
         for (OfferSynchronizer offerSynchronizer : offerSynchronizers) {
-            log.info("{} - start", offerSynchronizer.getClassName());
-            StopWatch stepWatch = new StopWatch();
-            stepWatch.start();
-            offerSynchronizer.synchronize();
-            stepWatch.stop();
-            log.info("{} - end, duration={} seconds", offerSynchronizer.getClassName(), (int) stepWatch.getTotalTime(SECONDS));
+            String synchronizerName = offerSynchronizer.getClassName();
+            long sourceSynchronizationStartedAt = System.nanoTime();
+            log.info("{} - start", synchronizerName);
+            try {
+                offerSynchronizer.synchronize();
+                successfulSynchronizations++;
+                log.info("{} - end, duration={} ms", synchronizerName,
+                        elapsedMillis(sourceSynchronizationStartedAt));
+            } catch (RuntimeException exception) {
+                failedSynchronizations++;
+                log.error("{} - failed, duration={} ms", synchronizerName,
+                        elapsedMillis(sourceSynchronizationStartedAt), exception);
+            }
         }
-        totalWatch.stop();
-        log.info("Synchronizing offers - end, totalDuration={} seconds", (int) totalWatch.getTotalTime(SECONDS));
+
+        log.info("Synchronizing offers - end, successfulSources={}, failedSources={}, totalDuration={} ms",
+                successfulSynchronizations, failedSynchronizations, elapsedMillis(synchronizationStartedAt));
     }
 
+    private long elapsedMillis(long startedAt) {
+        return NANOSECONDS.toMillis(System.nanoTime() - startedAt);
+    }
 }

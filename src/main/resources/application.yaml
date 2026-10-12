@@ -32,6 +32,11 @@ logging:
     root: INFO
     pl.easyoffer.offer_service: INFO
 
+scheduler:
+  offer-synchronization:
+    cron: ${OFFER_SYNC_CRON:0 0 4 * * *}
+    zone: ${OFFER_SYNC_ZONE:Europe/Warsaw}
+
 service:
   justJoinIt-service: ${JUSTJOINIT_SERVICE_URL:https://justjoin.it/}
   theProtocolIt-service: ${THEPROTOCOLIT_SERVICE_URL:https://theprotocol.it/}

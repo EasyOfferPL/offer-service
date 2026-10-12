@@ -11,6 +11,10 @@ spring:
     enabled: true
     validate-on-migrate: true
 
+scheduler:
+  offer-synchronization:
+    cron: "-"
+
 feature:
   just-join-it-synchronizer-enabled: false
   the-protocol-it-synchronizer-enabled: false
