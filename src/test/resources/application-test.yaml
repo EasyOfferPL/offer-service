@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:offer_service_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+
+feature:
+  just-join-it-synchronizer-enabled: false
+  the-protocol-it-synchronizer-enabled: false
+  nofluffjobs-synchronizer-enabled: false
