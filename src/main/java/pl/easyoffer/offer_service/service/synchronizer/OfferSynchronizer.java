@@ -1,11 +1,10 @@
 package pl.easyoffer.offer_service.service.synchronizer;
 
+import pl.easyoffer.offer_service.model.JobOfferSourceType;
+
 public interface OfferSynchronizer {
 
-    void synchronize();
+    JobOfferSourceType getSource();
 
-    default String getClassName() {
-        return this.getClass().getSimpleName();
-    }
-
+    SynchronizationResult synchronize();
 }

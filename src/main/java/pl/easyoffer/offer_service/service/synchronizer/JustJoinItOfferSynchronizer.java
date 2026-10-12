@@ -34,7 +34,12 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
     private String sourceUrl;
 
     @Override
-    public void synchronize() {
+    public JobOfferSourceType getSource() {
+        return JobOfferSourceType.JUST_JOIN_IT;
+    }
+
+    @Override
+    public SynchronizationResult synchronize() {
         List<JustJoinItOffer> offers = Arrays.stream(JustJoinItCategoryType.values())
                 .map(Enum::name)
                 .map(String::toLowerCase)
@@ -42,6 +47,7 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
                 .flatMap(Collection::stream)
                 .toList();
         save(offers);
+        return new SynchronizationResult(offers.size(), offers.size());
     }
 
     private List<JustJoinItOffer> fetchOffers(String category) {

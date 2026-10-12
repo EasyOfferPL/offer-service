@@ -31,11 +31,17 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
     private String sourceUrl;
 
     @Override
-    public void synchronize() {
+    public JobOfferSourceType getSource() {
+        return JobOfferSourceType.THE_PROTOCOL_IT;
+    }
+
+    @Override
+    public SynchronizationResult synchronize() {
         List<TheProtocolOffer> offersJson = fetchOffers(Arrays.stream(TheProtocolCategoryType.values())
                 .map(TheProtocolCategoryType::getTechnologyName)
                 .toList());
         saveAll(offersJson);
+        return new SynchronizationResult(offersJson.size(), offersJson.size());
     }
 
     private List<TheProtocolOffer> fetchOffers(List<String> categories) {

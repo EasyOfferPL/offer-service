@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.client.nofluffjobs.NofluffjobsClient;
+import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsCategoryType;
 import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsPosting;
 import pl.easyoffer.offer_service.model.to.nofluffjobs.NofluffjobsPostingsWrapper;
@@ -23,11 +24,14 @@ public class NofluffjobsSynchronizer implements OfferSynchronizer {
     private final NofluffjobsClient nofluffjobsClient;
 
     @Override
-    public void synchronize() {
+    public JobOfferSourceType getSource() {
+        return JobOfferSourceType.NO_FLUFF_JOBS;
+    }
+
+    @Override
+    public SynchronizationResult synchronize() {
         Set<NofluffjobsPosting> postings = fetchPostings();
-//        NofluffjobsPostingsWrapper test = nofluffjobsClient.getOffers();
-        var te = 1;
-//        Set<NofluffjobsOffer> offers = fetchOffers()
+        return new SynchronizationResult(postings.size(), 0);
     }
 
     private Set<NofluffjobsPosting> fetchPostings() {
