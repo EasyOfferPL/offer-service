@@ -7,24 +7,22 @@ spring:
 
   h2:
     console:
-      enabled: true
+      enabled: false
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:testdb}
-    username: ${SPRING_DATASOURCE_USERNAME:admin}
-    password: ${SPRING_DATASOURCE_PASSWORD:admin}
-    driver-class-name: org.h2.Driver
-#    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/offerdb}
-#    username: ${SPRING_DATASOURCE_USERNAME:OFFER_USER}
-#    password: ${SPRING_DATASOURCE_PASSWORD:offer_password}
-#    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5433/offerdb}
+    username: ${SPRING_DATASOURCE_USERNAME:offer_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:offer_password}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
+  flyway:
+    enabled: true
+    validate-on-migrate: true
   sql:
     init:
       mode: never
