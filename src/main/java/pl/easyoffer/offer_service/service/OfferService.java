@@ -15,6 +15,7 @@ import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
+import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.deduplication.OfferDuplicateFinder;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
@@ -67,6 +68,9 @@ public class OfferService {
         Optional<OfferEntity> duplicatedOffer = offerDuplicateFinder.find(request);
         OfferEntity entity = duplicatedOffer.orElseGet(OfferEntity::new);
         OfferMapper.INSTANCE.updateEntity(request, entity);
+        entity.setDeduplicationFingerprint(CrossSourceFingerprintV1.calculate(
+                request.getTitle(), request.getCompanyName(), request.getLocation()
+        ).orElse(null));
         entity.setTechnologies(resolveTechnologies(request));
         OfferEntity savedEntity = offerPersistenceService.save(entity);
         return OfferMapper.INSTANCE.toResponse(savedEntity);

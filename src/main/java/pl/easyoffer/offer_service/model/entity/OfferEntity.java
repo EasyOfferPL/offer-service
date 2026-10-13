@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
+import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +23,10 @@ import java.util.Set;
         ),
         indexes = {
                 @Index(name = "IDX_JOB_OFFER_EXTERNAL_ID", columnList = "EXTERNAL_ID"),
+                @Index(
+                        name = "IDX_JOB_OFFER_DEDUPLICATION_FINGERPRINT",
+                        columnList = "DEDUPLICATION_FINGERPRINT"
+                ),
                 @Index(name = "IDX_JOB_OFFER_TITLE_COMPANY", columnList = "TITLE, COMPANY_NAME"),
                 @Index(name = "IDX_JOB_OFFER_LOCATION", columnList = "LOCATION")
         }
@@ -71,6 +76,12 @@ public class OfferEntity extends AbstractAuditingEntity<Long> {
 
     @Column(name = "SOURCE", nullable = false, length = 100)
     private String source = JobOfferSourceType.MANUAL.name();
+
+    @Column(
+            name = "DEDUPLICATION_FINGERPRINT",
+            length = CrossSourceFingerprintV1.FINGERPRINT_LENGTH
+    )
+    private String deduplicationFingerprint;
 
     @Column(name = "URL", length = 1000)
     private String url;

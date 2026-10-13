@@ -44,8 +44,13 @@ public class OfferPersistenceService {
         return offerRepository.findBySourceAndExternalId(source, externalId);
     }
 
-    public Optional<OfferEntity> findByCoreFields(String title, String companyName, String location) {
-        return offerRepository.findByCoreFields(title, companyName, location);
+    public Optional<OfferEntity> findBySourceAndMissingExternalIdAndDeduplicationFingerprint(
+            String source,
+            String deduplicationFingerprint
+    ) {
+        return offerRepository.findFirstBySourceAndExternalIdIsNullAndDeduplicationFingerprintOrderByIdAsc(
+                source, deduplicationFingerprint
+        );
     }
 
     public List<CategoryStatisticProjection> getCategoryStatistics(Pageable pageable) {

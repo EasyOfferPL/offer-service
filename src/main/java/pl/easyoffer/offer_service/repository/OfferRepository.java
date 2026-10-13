@@ -17,17 +17,9 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
 
     Optional<OfferEntity> findBySourceAndExternalId(String source, String externalId);
 
-    @Query("""
-            SELECT oe
-            FROM OfferEntity oe
-            WHERE lower(oe.title) = lower(:title)
-              AND lower(oe.companyName) = lower(:companyName)
-              AND ((:location IS NULL AND oe.location IS NULL) OR lower(oe.location) = lower(:location))
-            """)
-    Optional<OfferEntity> findByCoreFields(
-            @Param("title") String title,
-            @Param("companyName") String companyName,
-            @Param("location") String location
+    Optional<OfferEntity> findFirstBySourceAndExternalIdIsNullAndDeduplicationFingerprintOrderByIdAsc(
+            String source,
+            String deduplicationFingerprint
     );
 
     @Query(value = """

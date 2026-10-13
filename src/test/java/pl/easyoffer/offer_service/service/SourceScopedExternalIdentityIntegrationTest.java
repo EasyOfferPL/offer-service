@@ -50,17 +50,84 @@ class SourceScopedExternalIdentityIntegrationTest {
     }
 
     @Test
+    void shouldPreserveBothSourceIdentitiesWhenCoreFieldsMatch() {
+        OfferResponseTO justJoinItOffer = offerService.createOrUpdate(request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "just-join-it-id", "Java Developer"
+        ));
+        OfferResponseTO theProtocolOffer = offerService.createOrUpdate(request(
+                JobOfferSourceType.THE_PROTOCOL_IT.name(), "the-protocol-id", "Java Developer"
+        ));
+
+        assertThat(theProtocolOffer.getId()).isNotEqualTo(justJoinItOffer.getId());
+        assertThat(offerRepository.count()).isEqualTo(2);
+        assertThat(offerRepository.findBySourceAndExternalId(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "just-join-it-id"
+        )).isPresent();
+        assertThat(offerRepository.findBySourceAndExternalId(
+                JobOfferSourceType.THE_PROTOCOL_IT.name(), "the-protocol-id"
+        )).isPresent();
+        OfferEntity justJoinItEntity = offerRepository.findBySourceAndExternalId(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "just-join-it-id"
+        ).orElseThrow();
+        OfferEntity theProtocolEntity = offerRepository.findBySourceAndExternalId(
+                JobOfferSourceType.THE_PROTOCOL_IT.name(), "the-protocol-id"
+        ).orElseThrow();
+        assertThat(justJoinItEntity.getDeduplicationFingerprint())
+                .isNotNull()
+                .isEqualTo(theProtocolEntity.getDeduplicationFingerprint());
+    }
+
+    @Test
+    void shouldUseSourceScopedFingerprintWhenExternalIdIsMissing() {
+        OfferRequestTO originalRequest = request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), null, "Java Developer"
+        );
+        originalRequest.setCompanyName("ACME");
+        OfferRequestTO repeatedRequest = request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), null, "  java   developer  "
+        );
+        repeatedRequest.setCompanyName(" acme ");
+        repeatedRequest.setLocation(" WARSAW ");
+
+        OfferResponseTO original = offerService.createOrUpdate(originalRequest);
+        OfferResponseTO repeated = offerService.createOrUpdate(repeatedRequest);
+
+        assertThat(repeated.getId()).isEqualTo(original.getId());
+        assertThat(offerRepository.count()).isEqualTo(1);
+    }
+
+    @Test
     void shouldUpdateOfferWhenSourceAndExternalIdAreUnchanged() {
         OfferResponseTO original = offerService.createOrUpdate(request(
                 JobOfferSourceType.JUST_JOIN_IT.name(), "stable-id", "Original title"
         ));
+        String originalFingerprint = offerRepository.findById(original.getId())
+                .orElseThrow()
+                .getDeduplicationFingerprint();
         OfferResponseTO updated = offerService.createOrUpdate(request(
                 JobOfferSourceType.JUST_JOIN_IT.name(), "stable-id", "Updated title"
         ));
+        String updatedFingerprint = offerRepository.findById(updated.getId())
+                .orElseThrow()
+                .getDeduplicationFingerprint();
 
         assertThat(updated.getId()).isEqualTo(original.getId());
         assertThat(updated.getTitle()).isEqualTo("Updated title");
+        assertThat(updatedFingerprint).isNotEqualTo(originalFingerprint);
         assertThat(offerRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldPreserveDistinctExternalIdentitiesWithinOneSource() {
+        OfferResponseTO first = offerService.createOrUpdate(request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "first-id", "Java Developer"
+        ));
+        OfferResponseTO second = offerService.createOrUpdate(request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "second-id", "Java Developer"
+        ));
+
+        assertThat(second.getId()).isNotEqualTo(first.getId());
+        assertThat(offerRepository.count()).isEqualTo(2);
     }
 
     @Test
