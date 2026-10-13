@@ -16,6 +16,10 @@ import java.util.Set;
 @Entity
 @Table(
         name = "OFFERS",
+        uniqueConstraints = @UniqueConstraint(
+                name = "UK_OFFERS_SOURCE_EXTERNAL_ID",
+                columnNames = {"SOURCE", "EXTERNAL_ID"}
+        ),
         indexes = {
                 @Index(name = "IDX_JOB_OFFER_EXTERNAL_ID", columnList = "EXTERNAL_ID"),
                 @Index(name = "IDX_JOB_OFFER_TITLE_COMPANY", columnList = "TITLE, COMPANY_NAME"),
@@ -65,7 +69,7 @@ public class OfferEntity extends AbstractAuditingEntity<Long> {
     @Column(name = "CURRENCY", length = 3)
     private String currency;
 
-    @Column(name = "SOURCE", length = 100)
+    @Column(name = "SOURCE", nullable = false, length = 100)
     private String source = JobOfferSourceType.MANUAL.name();
 
     @Column(name = "URL", length = 1000)

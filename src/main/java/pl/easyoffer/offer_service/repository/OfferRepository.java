@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSpecificationExecutor<OfferEntity> {
 
-    Optional<OfferEntity> findByExternalId(String externalId);
+    Optional<OfferEntity> findBySourceAndExternalId(String source, String externalId);
 
     @Query("""
             SELECT oe

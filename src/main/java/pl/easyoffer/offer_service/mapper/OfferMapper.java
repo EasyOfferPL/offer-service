@@ -3,6 +3,7 @@ package pl.easyoffer.offer_service.mapper;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.springframework.util.StringUtils;
+import pl.easyoffer.offer_service.model.JobOfferSourceType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
@@ -45,7 +46,7 @@ public interface OfferMapper {
         request.setEmploymentType(trimToNull(request.getEmploymentType()));
         request.setWorkMode(trimToNull(request.getWorkMode()));
         request.setCurrency(trimToNull(request.getCurrency()));
-        request.setSource(trimToNull(request.getSource()));
+        request.setSource(defaultSource(request.getSource()));
         request.setUrl(trimToNull(request.getUrl()));
     }
 
@@ -54,6 +55,11 @@ public interface OfferMapper {
             return null;
         }
         return value.trim();
+    }
+
+    private String defaultSource(String value) {
+        String source = trimToNull(value);
+        return source == null ? JobOfferSourceType.MANUAL.name() : source;
     }
 
 

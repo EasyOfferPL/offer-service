@@ -41,7 +41,7 @@ class OfferServiceApplicationTests {
 		assertThat(flyway.info().current())
 				.isNotNull()
 				.extracting(migrationInfo -> migrationInfo.getVersion().getVersion())
-				.isEqualTo("2");
+				.isEqualTo("3");
 	}
 
 	@Test

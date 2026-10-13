@@ -40,8 +40,8 @@ public class OfferPersistenceService {
         return offerRepository.save(offer);
     }
 
-    public Optional<OfferEntity> findByExternalId(String externalId) {
-        return offerRepository.findByExternalId(externalId);
+    public Optional<OfferEntity> findBySourceAndExternalId(String source, String externalId) {
+        return offerRepository.findBySourceAndExternalId(source, externalId);
     }
 
     public Optional<OfferEntity> findByCoreFields(String title, String companyName, String location) {

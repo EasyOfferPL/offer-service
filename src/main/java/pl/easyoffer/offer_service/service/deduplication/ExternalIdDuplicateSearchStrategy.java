@@ -22,10 +22,10 @@ public class ExternalIdDuplicateSearchStrategy implements DuplicateSearchStrateg
 
     @Override
     public Optional<OfferEntity> find(OfferRequestTO request) {
-        if (!StringUtils.hasText(request.getExternalId())) {
+        if (!StringUtils.hasText(request.getSource()) || !StringUtils.hasText(request.getExternalId())) {
             return Optional.empty();
         }
-        return offerPersistenceService.findByExternalId(request.getExternalId());
+        return offerPersistenceService.findBySourceAndExternalId(request.getSource(), request.getExternalId());
     }
 
 }
