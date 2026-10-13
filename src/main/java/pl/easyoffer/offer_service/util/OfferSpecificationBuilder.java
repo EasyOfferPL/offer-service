@@ -201,11 +201,11 @@ public final class OfferSpecificationBuilder {
         return spec;
     }
 
-    private void wrapSpecification(Specification<OfferEntity> spec) {
+    private void wrapSpecification(Specification<OfferEntity> additionalSpecification) {
         if (Objects.isNull(this.spec)) {
-            this.spec = spec;
+            this.spec = additionalSpecification;
         } else {
-            this.spec.and(spec);
+            this.spec = this.spec.and(additionalSpecification);
         }
     }
 
