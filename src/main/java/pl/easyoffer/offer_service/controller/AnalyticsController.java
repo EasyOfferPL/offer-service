@@ -1,7 +1,10 @@
 package pl.easyoffer.offer_service.controller;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,7 +18,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1.0/analytics")
 @RequiredArgsConstructor
+@Validated
 public class AnalyticsController {
+
+    private static final String FIRST_GROUP_PAGE = "0";
+    private static final String DEFAULT_GROUP_PAGE_SIZE = "50";
+    private static final int MAX_GROUP_PAGE_SIZE = 100;
 
     private final AnalyticsService analyticsService;
 
@@ -51,6 +59,15 @@ public class AnalyticsController {
             @RequestParam(required = false) String experienceLevel
     ) {
         return ResponseEntity.ok(analyticsService.getSalaryAnalytics(categoryName, experienceLevel));
+    }
+
+    @GetMapping("/deduplication-audit")
+    public ResponseEntity<DeduplicationAuditTO> getDeduplicationAudit(
+            @RequestParam(defaultValue = FIRST_GROUP_PAGE) @Min(0) int groupPage,
+            @RequestParam(defaultValue = DEFAULT_GROUP_PAGE_SIZE)
+            @Min(1) @Max(MAX_GROUP_PAGE_SIZE) int groupSize
+    ) {
+        return ResponseEntity.ok(analyticsService.getDeduplicationAudit(groupPage, groupSize));
     }
 
     @GetMapping("/salaries/trend")

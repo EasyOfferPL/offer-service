@@ -9,6 +9,7 @@ import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.OfferRepository;
 import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
+import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,6 +52,31 @@ public class OfferPersistenceService {
         return offerRepository.findFirstBySourceAndExternalIdIsNullAndDeduplicationFingerprintOrderByIdAsc(
                 source, deduplicationFingerprint
         );
+    }
+
+    public long countOffers() {
+        return offerRepository.count();
+    }
+
+    public List<String> findCrossSourceDuplicateFingerprints(Pageable pageable) {
+        return offerRepository.findCrossSourceDuplicateFingerprints(pageable);
+    }
+
+    public long countCrossSourceDuplicateGroups() {
+        return offerRepository.countCrossSourceDuplicateGroups();
+    }
+
+    public long countCrossSourceDuplicateGroupMembers() {
+        return offerRepository.countCrossSourceDuplicateGroupMembers();
+    }
+
+    public List<DeduplicationAuditOfferProjection> findCrossSourceDuplicateGroupMembers(
+            List<String> fingerprints
+    ) {
+        if (fingerprints.isEmpty()) {
+            return List.of();
+        }
+        return offerRepository.findCrossSourceDuplicateGroupMembers(fingerprints);
     }
 
     public List<CategoryStatisticProjection> getCategoryStatistics(Pageable pageable) {

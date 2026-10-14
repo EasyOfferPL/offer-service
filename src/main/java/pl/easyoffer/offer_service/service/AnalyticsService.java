@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.easyoffer.offer_service.exception.ValidationException;
 import pl.easyoffer.offer_service.model.OfferSearchRequest;
 import pl.easyoffer.offer_service.model.SalaryUnit;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.*;
+import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 
@@ -70,6 +72,44 @@ public class AnalyticsService {
                         .offersCount(rawCategoryStatistic.getOfferCount())
                         .build())
                 .toList();
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public DeduplicationAuditTO getDeduplicationAudit(int groupPage, int groupSize) {
+        long rawOfferCount = offerPersistenceService.countOffers();
+        long crossSourceDuplicateGroupCount = offerPersistenceService.countCrossSourceDuplicateGroups();
+        long groupedOfferCount = offerPersistenceService.countCrossSourceDuplicateGroupMembers();
+        List<String> groupFingerprints = offerPersistenceService.findCrossSourceDuplicateFingerprints(
+                PageRequest.of(groupPage, groupSize)
+        );
+        Map<String, List<DeduplicationAuditOfferProjection>> groupedOffers = offerPersistenceService
+                .findCrossSourceDuplicateGroupMembers(groupFingerprints)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        DeduplicationAuditOfferProjection::getDeduplicationFingerprint,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        List<CrossSourceDuplicateGroupTO> groups = groupedOffers.entrySet()
+                .stream()
+                .map(entry -> CrossSourceDuplicateGroupTO.builder()
+                        .deduplicationFingerprint(entry.getKey())
+                        .offers(entry.getValue().stream()
+                                .map(this::toDeduplicationAuditOffer)
+                                .toList())
+                        .build())
+                .toList();
+
+        return DeduplicationAuditTO.builder()
+                .rawOfferCount(rawOfferCount)
+                .uniqueOfferCount(rawOfferCount - groupedOfferCount + crossSourceDuplicateGroupCount)
+                .crossSourceDuplicateGroupCount(crossSourceDuplicateGroupCount)
+                .groupPage(groupPage)
+                .groupSize(groupSize)
+                .totalGroupPages(Math.ceilDiv(crossSourceDuplicateGroupCount, (long) groupSize))
+                .groups(groups)
+                .build();
     }
 
     public List<TechnologyTrendTO> getTechnologyTrend(
@@ -138,6 +178,16 @@ public class AnalyticsService {
 
     private LocalDateTime getPublicationDate(OfferResponseTO offer) {
         return Objects.nonNull(offer.getPublishedAt()) ? offer.getPublishedAt() : offer.getCreatedAt();
+    }
+
+    private DeduplicationAuditOfferTO toDeduplicationAuditOffer(
+            DeduplicationAuditOfferProjection offer
+    ) {
+        return DeduplicationAuditOfferTO.builder()
+                .offerId(offer.getOfferId())
+                .source(offer.getSource())
+                .externalId(offer.getExternalId())
+                .build();
     }
 
 }

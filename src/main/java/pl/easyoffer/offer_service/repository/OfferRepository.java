@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
+import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,54 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
     Optional<OfferEntity> findFirstBySourceAndExternalIdIsNullAndDeduplicationFingerprintOrderByIdAsc(
             String source,
             String deduplicationFingerprint
+    );
+
+    @Query("""
+            SELECT groupedOffer.deduplicationFingerprint
+            FROM OfferEntity groupedOffer
+            WHERE groupedOffer.deduplicationFingerprint IS NOT NULL
+            GROUP BY groupedOffer.deduplicationFingerprint
+            HAVING COUNT(DISTINCT groupedOffer.source) > 1
+            ORDER BY groupedOffer.deduplicationFingerprint
+            """)
+    List<String> findCrossSourceDuplicateFingerprints(Pageable pageable);
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM (
+                SELECT deduplication_fingerprint
+                FROM offers
+                WHERE deduplication_fingerprint IS NOT NULL
+                GROUP BY deduplication_fingerprint
+                HAVING COUNT(DISTINCT source) > 1
+            ) cross_source_groups
+            """, nativeQuery = true)
+    long countCrossSourceDuplicateGroups();
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM offers
+            WHERE deduplication_fingerprint IN (
+                SELECT deduplication_fingerprint
+                FROM offers
+                WHERE deduplication_fingerprint IS NOT NULL
+                GROUP BY deduplication_fingerprint
+                HAVING COUNT(DISTINCT source) > 1
+            )
+            """, nativeQuery = true)
+    long countCrossSourceDuplicateGroupMembers();
+
+    @Query("""
+            SELECT oe.id AS offerId,
+                   oe.source AS source,
+                   oe.externalId AS externalId,
+                   oe.deduplicationFingerprint AS deduplicationFingerprint
+            FROM OfferEntity oe
+            WHERE oe.deduplicationFingerprint IN :fingerprints
+            ORDER BY oe.deduplicationFingerprint, oe.source, oe.id
+            """)
+    List<DeduplicationAuditOfferProjection> findCrossSourceDuplicateGroupMembers(
+            @Param("fingerprints") List<String> fingerprints
     );
 
     @Query(value = """
