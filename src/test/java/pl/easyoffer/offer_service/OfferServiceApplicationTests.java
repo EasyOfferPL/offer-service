@@ -41,7 +41,7 @@ class OfferServiceApplicationTests {
 		assertThat(flyway.info().current())
 				.isNotNull()
 				.extracting(migrationInfo -> migrationInfo.getVersion().getVersion())
-				.isEqualTo("4");
+				.isEqualTo("5");
 	}
 
 	@Test
@@ -54,7 +54,7 @@ class OfferServiceApplicationTests {
 				cycleId, JobOfferSourceType.JUST_JOIN_IT, startedAt
 		);
 		synchronizationRunService.markSucceeded(
-				runId, new SynchronizationResult(20, 18), finishedAt
+				runId, new SynchronizationResult(20, 10, 8, 2), finishedAt
 		);
 
 		SynchronizationRunEntity persistedRun = synchronizationRunRepository.findById(runId).orElseThrow();
@@ -64,6 +64,9 @@ class OfferServiceApplicationTests {
 		assertThat(persistedRun.getFinishedAt()).isEqualTo(finishedAt);
 		assertThat(persistedRun.getFetchedOffers()).isEqualTo(20);
 		assertThat(persistedRun.getPersistedOffers()).isEqualTo(18);
+		assertThat(persistedRun.getCreatedOffers()).isEqualTo(10);
+		assertThat(persistedRun.getUpdatedOffers()).isEqualTo(8);
+		assertThat(persistedRun.getSkippedOffers()).isEqualTo(2);
 	}
 
 }

@@ -17,6 +17,7 @@ import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.deduplication.OfferDuplicateFinder;
+import pl.easyoffer.offer_service.service.persistence.OfferPersistenceOutcome;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 import pl.easyoffer.offer_service.util.OfferSpecificationBuilder;
@@ -64,6 +65,15 @@ public class OfferService {
 
     @Transactional
     public OfferResponseTO createOrUpdate(OfferRequestTO request) {
+        return persist(request).response();
+    }
+
+    @Transactional
+    public OfferPersistenceOutcome createOrUpdateForSynchronization(OfferRequestTO request) {
+        return persist(request).outcome();
+    }
+
+    private OfferPersistenceResult persist(OfferRequestTO request) {
         OfferMapper.INSTANCE.normalizeRequest(request);
         Optional<OfferEntity> duplicatedOffer = offerDuplicateFinder.find(request);
         OfferEntity entity = duplicatedOffer.orElseGet(OfferEntity::new);
@@ -73,7 +83,10 @@ public class OfferService {
         ).orElse(null));
         entity.setTechnologies(resolveTechnologies(request));
         OfferEntity savedEntity = offerPersistenceService.save(entity);
-        return OfferMapper.INSTANCE.toResponse(savedEntity);
+        OfferPersistenceOutcome outcome = duplicatedOffer.isPresent()
+                ? OfferPersistenceOutcome.UPDATED
+                : OfferPersistenceOutcome.CREATED;
+        return new OfferPersistenceResult(OfferMapper.INSTANCE.toResponse(savedEntity), outcome);
     }
 
     private Set<TechnologyEntity> resolveTechnologies(OfferRequestTO request) {
@@ -119,6 +132,12 @@ public class OfferService {
                 .withTechnologies(offerSearchRequest.getTechnologies())
                 .withPublishedAtBetween(offerSearchRequest.getPublishedAtFrom(), offerSearchRequest.getPublishedAtTo())
                 .build();
+    }
+
+    private record OfferPersistenceResult(
+            OfferResponseTO response,
+            OfferPersistenceOutcome outcome
+    ) {
     }
 
 }

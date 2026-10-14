@@ -36,8 +36,8 @@ class OfferSyncSchedulerTest {
     @Test
     void shouldAuditSuccessfulSynchronizationForEveryEnabledSource() {
         // given
-        SynchronizationResult firstResult = new SynchronizationResult(12, 12);
-        SynchronizationResult secondResult = new SynchronizationResult(8, 8);
+        SynchronizationResult firstResult = new SynchronizationResult(12, 7, 4, 1);
+        SynchronizationResult secondResult = new SynchronizationResult(8, 3, 5, 0);
         when(firstSynchronizer.getSource()).thenReturn(JobOfferSourceType.JUST_JOIN_IT);
         when(secondSynchronizer.getSource()).thenReturn(JobOfferSourceType.THE_PROTOCOL_IT);
         when(synchronizationRunService.startRun(any(UUID.class), eq(JobOfferSourceType.JUST_JOIN_IT), any(Instant.class)))
@@ -74,7 +74,7 @@ class OfferSyncSchedulerTest {
                 .thenReturn(2L);
         doThrow(new IllegalStateException("Source unavailable"))
                 .when(firstSynchronizer).synchronize();
-        when(secondSynchronizer.synchronize()).thenReturn(new SynchronizationResult(3, 3));
+        when(secondSynchronizer.synchronize()).thenReturn(new SynchronizationResult(3, 1, 1, 1));
         OfferSyncScheduler scheduler = scheduler();
 
         // when
@@ -97,7 +97,7 @@ class OfferSyncSchedulerTest {
                 .thenThrow(new IllegalStateException("Database unavailable"));
         when(synchronizationRunService.startRun(any(UUID.class), eq(JobOfferSourceType.THE_PROTOCOL_IT), any(Instant.class)))
                 .thenReturn(2L);
-        when(secondSynchronizer.synchronize()).thenReturn(new SynchronizationResult(3, 3));
+        when(secondSynchronizer.synchronize()).thenReturn(new SynchronizationResult(3, 2, 1, 0));
         OfferSyncScheduler scheduler = scheduler();
 
         // when

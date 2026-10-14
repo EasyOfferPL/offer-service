@@ -13,6 +13,7 @@ import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItCategoryType;
 import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOffer;
 import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOfferData;
 import pl.easyoffer.offer_service.service.OfferService;
+import pl.easyoffer.offer_service.service.persistence.OfferPersistenceOutcome;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,8 +47,7 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
                 .map(this::fetchOffers)
                 .flatMap(Collection::stream)
                 .toList();
-        save(offers);
-        return new SynchronizationResult(offers.size(), offers.size());
+        return SynchronizationResult.fromOutcomes(save(offers));
     }
 
     private List<JustJoinItOffer> fetchOffers(String category) {
@@ -63,15 +63,16 @@ public class JustJoinItOfferSynchronizer implements OfferSynchronizer {
         return offers;
     }
 
-    private void save(List<JustJoinItOffer> offers) {
-        offers.stream()
+    private List<OfferPersistenceOutcome> save(List<JustJoinItOffer> offers) {
+        return offers.stream()
                 .map(offer -> {
                     OfferRequestTO mappedOffer = JustJoinItOfferMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getSlug());
                     mappedOffer.setSource(JobOfferSourceType.JUST_JOIN_IT.name());
                     return mappedOffer;
                 })
-                .forEach(offerService::createOrUpdate);
+                .map(offerService::createOrUpdateForSynchronization)
+                .toList();
     }
 
 }

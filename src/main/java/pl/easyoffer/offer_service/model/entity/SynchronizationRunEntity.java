@@ -46,6 +46,15 @@ public class SynchronizationRunEntity {
     @Column(name = "PERSISTED_OFFERS")
     private Integer persistedOffers;
 
+    @Column(name = "CREATED_OFFERS")
+    private Integer createdOffers;
+
+    @Column(name = "UPDATED_OFFERS")
+    private Integer updatedOffers;
+
+    @Column(name = "SKIPPED_OFFERS")
+    private Integer skippedOffers;
+
     @Column(name = "ERROR_TYPE", length = 255)
     private String errorType;
 
@@ -70,6 +79,9 @@ public class SynchronizationRunEntity {
         status = SynchronizationRunStatus.SUCCEEDED;
         fetchedOffers = result.fetchedOffers();
         persistedOffers = result.persistedOffers();
+        createdOffers = result.createdOffers();
+        updatedOffers = result.updatedOffers();
+        skippedOffers = result.skippedOffers();
     }
 
     public void fail(RuntimeException exception, Instant finishedAt) {

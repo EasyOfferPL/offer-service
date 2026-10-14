@@ -55,8 +55,10 @@ public class OfferSyncScheduler {
                 SynchronizationResult result = offerSynchronizer.synchronize();
                 synchronizationRunService.markSucceeded(runId, result, Instant.now());
                 successfulSynchronizations++;
-                log.info("{} - end, runId={}, fetchedOffers={}, persistedOffers={}, duration={} ms",
-                        sourceName, runId, result.fetchedOffers(), result.persistedOffers(),
+                log.info("{} - end, runId={}, fetchedOffers={}, createdOffers={}, updatedOffers={}, "
+                                + "skippedOffers={}, persistedOffers={}, duration={} ms",
+                        sourceName, runId, result.fetchedOffers(), result.createdOffers(), result.updatedOffers(),
+                        result.skippedOffers(), result.persistedOffers(),
                         elapsedMillis(sourceSynchronizationStartedAt));
             } catch (RuntimeException exception) {
                 failedSynchronizations++;

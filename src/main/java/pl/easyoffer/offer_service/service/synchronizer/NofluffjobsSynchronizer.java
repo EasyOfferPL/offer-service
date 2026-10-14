@@ -31,7 +31,7 @@ public class NofluffjobsSynchronizer implements OfferSynchronizer {
     @Override
     public SynchronizationResult synchronize() {
         Set<NofluffjobsPosting> postings = fetchPostings();
-        return new SynchronizationResult(postings.size(), 0);
+        return SynchronizationResult.allSkipped(postings.size());
     }
 
     private Set<NofluffjobsPosting> fetchPostings() {

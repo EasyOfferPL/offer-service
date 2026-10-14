@@ -12,6 +12,7 @@ import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolCategoryType;
 import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolOffer;
 import pl.easyoffer.offer_service.service.OfferService;
+import pl.easyoffer.offer_service.service.persistence.OfferPersistenceOutcome;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,23 +41,23 @@ public class TheProtocolItSynchronizer implements OfferSynchronizer {
         List<TheProtocolOffer> offersJson = fetchOffers(Arrays.stream(TheProtocolCategoryType.values())
                 .map(TheProtocolCategoryType::getTechnologyName)
                 .toList());
-        saveAll(offersJson);
-        return new SynchronizationResult(offersJson.size(), offersJson.size());
+        return SynchronizationResult.fromOutcomes(saveAll(offersJson));
     }
 
     private List<TheProtocolOffer> fetchOffers(List<String> categories) {
         return theProtocolClient.getAllOffers(categories);
     }
 
-    private void saveAll(List<TheProtocolOffer> offers) {
-        offers.stream()
+    private List<OfferPersistenceOutcome> saveAll(List<TheProtocolOffer> offers) {
+        return offers.stream()
                 .map(offer -> {
                     OfferRequestTO mappedOffer = TheProtocolItMapper.INSTANCE.map(offer);
                     mappedOffer.setUrl(sourceUrl + JOB_OFFER_PATH + offer.getOfferUrlName());
                     mappedOffer.setSource(JobOfferSourceType.THE_PROTOCOL_IT.name());
                     return mappedOffer;
                 })
-                .forEach(offerService::createOrUpdate);
+                .map(offerService::createOrUpdateForSynchronization)
+                .toList();
     }
 
 }

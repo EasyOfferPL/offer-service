@@ -23,13 +23,16 @@ class SynchronizationRunEntityTest {
                 cycleId, JobOfferSourceType.JUST_JOIN_IT, STARTED_AT
         );
 
-        run.succeed(new SynchronizationResult(15, 14), STARTED_AT.plus(2, ChronoUnit.MINUTES));
+        run.succeed(new SynchronizationResult(15, 8, 6, 1), STARTED_AT.plus(2, ChronoUnit.MINUTES));
 
         assertThat(run.getCycleId()).isEqualTo(cycleId);
         assertThat(run.getSource()).isEqualTo(JobOfferSourceType.JUST_JOIN_IT);
         assertThat(run.getStatus()).isEqualTo(SynchronizationRunStatus.SUCCEEDED);
         assertThat(run.getFetchedOffers()).isEqualTo(15);
         assertThat(run.getPersistedOffers()).isEqualTo(14);
+        assertThat(run.getCreatedOffers()).isEqualTo(8);
+        assertThat(run.getUpdatedOffers()).isEqualTo(6);
+        assertThat(run.getSkippedOffers()).isEqualTo(1);
         assertThat(run.getFinishedAt()).isEqualTo(STARTED_AT.plus(2, ChronoUnit.MINUTES));
         assertThat(run.getErrorType()).isNull();
         assertThat(run.getErrorMessage()).isNull();
@@ -49,6 +52,9 @@ class SynchronizationRunEntityTest {
         assertThat(run.getErrorMessage()).hasSize(SynchronizationRunEntity.MAX_ERROR_MESSAGE_LENGTH);
         assertThat(run.getFetchedOffers()).isNull();
         assertThat(run.getPersistedOffers()).isNull();
+        assertThat(run.getCreatedOffers()).isNull();
+        assertThat(run.getUpdatedOffers()).isNull();
+        assertThat(run.getSkippedOffers()).isNull();
     }
 
     @Test
@@ -56,7 +62,7 @@ class SynchronizationRunEntityTest {
         SynchronizationRunEntity run = SynchronizationRunEntity.start(
                 UUID.randomUUID(), JobOfferSourceType.JUST_JOIN_IT, STARTED_AT
         );
-        run.succeed(new SynchronizationResult(1, 1), STARTED_AT.plusSeconds(1));
+        run.succeed(new SynchronizationResult(1, 1, 0, 0), STARTED_AT.plusSeconds(1));
 
         assertThatThrownBy(() -> run.fail(
                 new IllegalStateException("late failure"), STARTED_AT.plusSeconds(2)

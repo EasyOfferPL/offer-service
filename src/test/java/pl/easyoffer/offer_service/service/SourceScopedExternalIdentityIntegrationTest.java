@@ -11,6 +11,7 @@ import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.repository.OfferRepository;
+import pl.easyoffer.offer_service.service.persistence.OfferPersistenceOutcome;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -114,6 +115,23 @@ class SourceScopedExternalIdentityIntegrationTest {
         assertThat(updated.getId()).isEqualTo(original.getId());
         assertThat(updated.getTitle()).isEqualTo("Updated title");
         assertThat(updatedFingerprint).isNotEqualTo(originalFingerprint);
+        assertThat(offerRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldReportCreatedAndUpdatedPersistenceOutcomes() {
+        OfferRequestTO original = request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "outcome-id", "Original title"
+        );
+        OfferRequestTO update = request(
+                JobOfferSourceType.JUST_JOIN_IT.name(), "outcome-id", "Updated title"
+        );
+
+        OfferPersistenceOutcome created = offerService.createOrUpdateForSynchronization(original);
+        OfferPersistenceOutcome updated = offerService.createOrUpdateForSynchronization(update);
+
+        assertThat(created).isEqualTo(OfferPersistenceOutcome.CREATED);
+        assertThat(updated).isEqualTo(OfferPersistenceOutcome.UPDATED);
         assertThat(offerRepository.count()).isEqualTo(1);
     }
 
