@@ -13,7 +13,9 @@ import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
+import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
+import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -29,7 +31,9 @@ public class AnalyticsService {
 
     private final OfferService offerService;
     private final OfferPersistenceService offerPersistenceService;
+    private final TechnologyPersistenceService technologyPersistenceService;
     private final SalaryAnalyticsCalculator salaryAnalyticsCalculator;
+    private final TechnologyNormalizer technologyNormalizer;
 
     public List<OfferResponseTO> retrieveNewestOffers() {
         OfferSearchRequest searchRequest = OfferSearchRequest.builder()
@@ -109,6 +113,24 @@ public class AnalyticsService {
                 .groupSize(groupSize)
                 .totalGroupPages(Math.ceilDiv(crossSourceDuplicateGroupCount, (long) groupSize))
                 .groups(groups)
+                .build();
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public TechnologyNormalizationAuditTO getTechnologyNormalizationAudit() {
+        String normalizationVersion = technologyNormalizer.version();
+        return TechnologyNormalizationAuditTO.builder()
+                .normalizationVersion(normalizationVersion)
+                .technologyValueCount(technologyPersistenceService.countValues(normalizationVersion))
+                .changedTechnologyValueCount(
+                        technologyPersistenceService.countChangedValues(normalizationVersion)
+                )
+                .offerTechnologyAssociationCount(
+                        technologyPersistenceService.countOfferAssociations(normalizationVersion)
+                )
+                .changedOfferTechnologyAssociationCount(
+                        technologyPersistenceService.countChangedOfferAssociations(normalizationVersion)
+                )
                 .build();
     }
 

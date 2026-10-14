@@ -9,9 +9,7 @@ import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -30,7 +28,10 @@ public interface OfferMapper {
 
     default List<String> mapTechnologies(Set<TechnologyEntity> technologies) {
         return technologies.stream()
-                .map(TechnologyEntity::getName)
+                .map(technology -> Optional.ofNullable(technology.getCanonicalName())
+                        .orElse(technology.getName()))
+                .filter(Objects::nonNull)
+                .distinct()
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
     }

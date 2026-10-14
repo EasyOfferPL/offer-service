@@ -13,7 +13,9 @@ import pl.easyoffer.offer_service.model.to.SalaryAnalyticsTO;
 import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
 import pl.easyoffer.offer_service.model.to.SalaryTrendTO;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
+import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
+import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,11 +36,20 @@ class AnalyticsServiceTest {
     @Mock
     private OfferPersistenceService offerPersistenceService;
 
+    @Mock
+    private TechnologyPersistenceService technologyPersistenceService;
+
     private AnalyticsService analyticsService;
 
     @BeforeEach
     void setUp() {
-        analyticsService = new AnalyticsService(offerService, offerPersistenceService, new SalaryAnalyticsCalculator());
+        analyticsService = new AnalyticsService(
+                offerService,
+                offerPersistenceService,
+                technologyPersistenceService,
+                new SalaryAnalyticsCalculator(),
+                new TechnologyNormalizer()
+        );
     }
 
     @Test

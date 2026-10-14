@@ -17,15 +17,14 @@ import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.OfferResponseTO;
 import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.deduplication.OfferDuplicateFinder;
+import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizationResult;
+import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceOutcome;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 import pl.easyoffer.offer_service.util.OfferSpecificationBuilder;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +34,7 @@ public class OfferService {
     private final OfferPersistenceService offerPersistenceService;
     private final TechnologyPersistenceService technologyPersistenceService;
     private final OfferDuplicateFinder offerDuplicateFinder;
+    private final TechnologyNormalizer technologyNormalizer;
 
     @Transactional(readOnly = true)
     public List<OfferResponseTO> search(OfferSearchRequest offerSearchRequest) {
@@ -94,23 +94,51 @@ public class OfferService {
                 .map(OfferRequestTO::getTechnologies)
                 .filter(technologies -> !CollectionUtils.isEmpty(technologies))
                 .map(technologies -> technologies.stream()
-                        .map(technologyTO -> findOrCreateTechnology(technologyTO.getName(), technologyTO.getLevel()))
+                        .flatMap(technologyTO -> technologyNormalizer.normalize(technologyTO.getName())
+                                .stream()
+                                .map(normalizedTechnology -> findOrCreateTechnology(
+                                        normalizedTechnology, technologyTO.getLevel()
+                                )))
                         .collect(Collectors.toSet())
                 )
                 .orElse(Collections.emptySet());
     }
 
-    private TechnologyEntity findOrCreateTechnology(String name, Integer level) {
-        return technologyPersistenceService.findByNameAndLevel(name, level)
-                .orElseGet(() -> {
-                    TechnologyEntity technologyEntity = new TechnologyEntity();
-                    technologyEntity.setName(name);
-                    technologyEntity.setLevel(level);
-                    return technologyPersistenceService.save(technologyEntity);
-                });
+    private TechnologyEntity findOrCreateTechnology(
+            TechnologyNormalizationResult normalization,
+            Integer level
+    ) {
+        return technologyPersistenceService.findByNameAndLevel(normalization.sourceName(), level)
+                .map(technology -> updateNormalization(technology, normalization))
+                .orElseGet(() -> createTechnology(normalization, level));
     }
 
-    private static Specification<OfferEntity> builSpecification(OfferSearchRequest offerSearchRequest) {
+    private TechnologyEntity updateNormalization(
+            TechnologyEntity technology,
+            TechnologyNormalizationResult normalization
+    ) {
+        if (Objects.equals(technology.getCanonicalName(), normalization.canonicalName())
+                && Objects.equals(technology.getNormalizationVersion(), normalization.version())) {
+            return technology;
+        }
+        technology.setCanonicalName(normalization.canonicalName());
+        technology.setNormalizationVersion(normalization.version());
+        return technologyPersistenceService.save(technology);
+    }
+
+    private TechnologyEntity createTechnology(
+            TechnologyNormalizationResult normalization,
+            Integer level
+    ) {
+        TechnologyEntity technology = new TechnologyEntity();
+        technology.setName(normalization.sourceName());
+        technology.setCanonicalName(normalization.canonicalName());
+        technology.setNormalizationVersion(normalization.version());
+        technology.setLevel(level);
+        return technologyPersistenceService.save(technology);
+    }
+
+    private Specification<OfferEntity> builSpecification(OfferSearchRequest offerSearchRequest) {
         return OfferSpecificationBuilder.builder()
                 .withIds(offerSearchRequest.getIds())
                 .withExternalIds(offerSearchRequest.getExternalIds())
@@ -129,7 +157,9 @@ public class OfferService {
                 .withLanguages(offerSearchRequest.getLanguages())
                 .withCreatedAtBetween(offerSearchRequest.getCreatedAtFrom(), offerSearchRequest.getCreatedAtTo())
                 .withUpdatedAtBetween(offerSearchRequest.getUpdatedAtFrom(), offerSearchRequest.getUpdatedAtTo())
-                .withTechnologies(offerSearchRequest.getTechnologies())
+                .withTechnologies(technologyNormalizer.normalizeCanonicalNames(
+                        offerSearchRequest.getTechnologies()
+                ))
                 .withPublishedAtBetween(offerSearchRequest.getPublishedAtFrom(), offerSearchRequest.getPublishedAtTo())
                 .build();
     }

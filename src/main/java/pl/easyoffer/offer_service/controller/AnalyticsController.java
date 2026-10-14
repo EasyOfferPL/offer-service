@@ -70,6 +70,11 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getDeduplicationAudit(groupPage, groupSize));
     }
 
+    @GetMapping("/technology-normalization-audit")
+    public ResponseEntity<TechnologyNormalizationAuditTO> getTechnologyNormalizationAudit() {
+        return ResponseEntity.ok(analyticsService.getTechnologyNormalizationAudit());
+    }
+
     @GetMapping("/salaries/trend")
     public ResponseEntity<SalaryTrendTO> getSalaryTrend(
             @RequestParam String categoryName,

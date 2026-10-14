@@ -177,7 +177,7 @@ public final class OfferSpecificationBuilder {
         if (!CollectionUtils.isEmpty(technologies)) {
             wrapSpecification((root, query, criteriaBuilder) ->
                     root.join(OfferEntity.Fields.technologies)
-                            .get(TechnologyEntity.Fields.name)
+                            .get(TechnologyEntity.Fields.canonicalName)
                             .in(technologies));
         }
         return this;
