@@ -1,11 +1,23 @@
 package pl.easyoffer.offer_service.model;
 
 import java.util.Locale;
+import java.util.Set;
 
 public enum SalaryType {
     GROSS,
     NET,
     UNKNOWN;
+
+    private static final Set<String> GROSS_SOURCE_VALUES = Set.of(
+            "brutto",
+            "gross"
+    );
+    private static final Set<String> NET_SOURCE_VALUES = Set.of(
+            "netto (+ vat)",
+            "net (+ vat)",
+            "netto",
+            "net"
+    );
 
     public static SalaryType fromGross(Boolean gross) {
         if (gross == null) {
@@ -20,10 +32,10 @@ public enum SalaryType {
         }
 
         String normalized = value.trim().toLowerCase(Locale.ROOT);
-        if (normalized.contains("brutto") || normalized.contains("gross")) {
+        if (GROSS_SOURCE_VALUES.contains(normalized)) {
             return GROSS;
         }
-        if (normalized.contains("netto") || normalized.equals("net")) {
+        if (NET_SOURCE_VALUES.contains(normalized)) {
             return NET;
         }
         return UNKNOWN;

@@ -107,14 +107,38 @@ public interface TheProtocolItMapper {
 
     @AfterMapping
     default void determineSalaryParameters(TheProtocolOffer src, @MappingTarget OfferRequestTO target) {
+        List<TheProtocolContract> contractsWithSalary = Optional.ofNullable(src.getTypesOfContracts())
+                .orElseGet(List::of)
+                .stream()
+                .filter(Objects::nonNull)
+                .filter(contract -> contract.getSalary() != null)
+                .toList();
+
+        if (contractsWithSalary.size() == 1) {
+            mapContractSalary(contractsWithSalary.getFirst(), target);
+            return;
+        }
+
         Optional.ofNullable(src.getSalary())
-                .ifPresent(salary -> {
-                    target.setSalaryMin(salary.getFrom());
-                    target.setSalaryMax(salary.getTo());
-                    target.setSalaryUnit(determineSalaryUnit(salary));
-                    target.setCurrency(determineSalaryCurrency(salary));
-                    target.setSalaryType(SalaryType.fromSourceValue(salary.getKindName()));
-                });
+                .ifPresent(salary -> mapSalary(salary, target));
+
+        if (contractsWithSalary.size() > 1) {
+            target.setEmploymentType(null);
+            target.setSalaryType(SalaryType.UNKNOWN);
+        }
+    }
+
+    private static void mapContractSalary(TheProtocolContract contract, OfferRequestTO target) {
+        target.setEmploymentType(TheProtocolItEmploymentType.getNameByValue(contract.getId()));
+        mapSalary(contract.getSalary(), target);
+    }
+
+    private static void mapSalary(TheProtocolSalary salary, OfferRequestTO target) {
+        target.setSalaryMin(salary.getFrom());
+        target.setSalaryMax(salary.getTo());
+        target.setSalaryUnit(determineSalaryUnit(salary));
+        target.setCurrency(determineSalaryCurrency(salary));
+        target.setSalaryType(SalaryType.fromSourceValue(salary.getKindName()));
     }
 
     private static String determineSalaryUnit(TheProtocolSalary salary) {

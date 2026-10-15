@@ -12,7 +12,11 @@ class SalaryTypeTest {
         assertThat(SalaryType.fromGross(false)).isEqualTo(SalaryType.NET);
         assertThat(SalaryType.fromGross(null)).isEqualTo(SalaryType.UNKNOWN);
         assertThat(SalaryType.fromSourceValue(" brutto ")).isEqualTo(SalaryType.GROSS);
+        assertThat(SalaryType.fromSourceValue("gross")).isEqualTo(SalaryType.GROSS);
         assertThat(SalaryType.fromSourceValue("NETTO")).isEqualTo(SalaryType.NET);
+        assertThat(SalaryType.fromSourceValue("netto (+ VAT)")).isEqualTo(SalaryType.NET);
+        assertThat(SalaryType.fromSourceValue("net (+ VAT)")).isEqualTo(SalaryType.NET);
+        assertThat(SalaryType.fromSourceValue("net")).isEqualTo(SalaryType.NET);
         assertThat(SalaryType.fromSourceValue("including VAT")).isEqualTo(SalaryType.UNKNOWN);
         assertThat(SalaryType.fromSourceValue(null)).isEqualTo(SalaryType.UNKNOWN);
     }

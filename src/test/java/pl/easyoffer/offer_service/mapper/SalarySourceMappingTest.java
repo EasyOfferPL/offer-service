@@ -1,5 +1,6 @@
 package pl.easyoffer.offer_service.mapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
@@ -54,5 +55,96 @@ class SalarySourceMappingTest {
 
         assertThat(target.getSalaryType()).isEqualTo(SalaryType.NET);
         assertThat(target.getSalaryUnit()).isEqualTo("MONTH");
+    }
+
+    @Test
+    void shouldMapSalaryAndEmploymentTypeFromTheSameTheProtocolContract() throws Exception {
+        String sourceJson = """
+                {
+                  "id": "01000000-183e-46c7-5a31-08df12fba9db",
+                  "title": "Senior React Developer",
+                  "employer": "Example Company",
+                  "workplace": [{"city": "Warszawa"}],
+                  "positionLevels": [{"value": "senior"}],
+                  "typesOfContracts": [
+                    {"id": 0, "salary": null},
+                    {
+                      "id": 3,
+                      "salary": {
+                        "from": 17500,
+                        "to": 25000,
+                        "currencySymbol": "zł",
+                        "timeUnit": {"shortForm": "mth.", "longForm": "monthly"},
+                        "kindName": "net (+ VAT)"
+                      }
+                    }
+                  ],
+                  "technologies": ["React.js"],
+                  "salary": {
+                    "to": 25000,
+                    "currency": "zł",
+                    "timeUnit": {"shortForm": "mth.", "longForm": "monthly"}
+                  },
+                  "workModes": ["zdalna"]
+                }
+                """;
+
+        TheProtocolOffer source = new ObjectMapper().readValue(sourceJson, TheProtocolOffer.class);
+
+        OfferRequestTO target = TheProtocolItMapper.INSTANCE.map(source);
+
+        assertThat(target.getEmploymentType()).isEqualTo("B2B");
+        assertThat(target.getSalaryMin()).isEqualByComparingTo("17500");
+        assertThat(target.getSalaryMax()).isEqualByComparingTo("25000");
+        assertThat(target.getCurrency()).isEqualTo("PLN");
+        assertThat(target.getSalaryUnit()).isEqualTo("MONTH");
+        assertThat(target.getSalaryType()).isEqualTo(SalaryType.NET);
+    }
+
+    @Test
+    void shouldKeepConflictingTheProtocolContractSalaryOutOfAnalytics() throws Exception {
+        String sourceJson = """
+                {
+                  "typesOfContracts": [
+                    {
+                      "id": 0,
+                      "salary": {
+                        "from": 11000,
+                        "to": 16500,
+                        "currencySymbol": "zł",
+                        "timeUnit": {"shortForm": "mth."},
+                        "kindName": "gross"
+                      }
+                    },
+                    {
+                      "id": 3,
+                      "salary": {
+                        "from": 17500,
+                        "to": 25000,
+                        "currencySymbol": "zł",
+                        "timeUnit": {"shortForm": "mth."},
+                        "kindName": "net (+ VAT)"
+                      }
+                    }
+                  ],
+                  "salary": {
+                    "to": 25000,
+                    "currency": "zł",
+                    "timeUnit": {"shortForm": "mth."}
+                  }
+                }
+                """;
+        TheProtocolOffer source = new ObjectMapper().readValue(sourceJson, TheProtocolOffer.class);
+        OfferRequestTO target = new OfferRequestTO();
+        target.setEmploymentType("EMPLOYMENT");
+
+        TheProtocolItMapper.INSTANCE.determineSalaryParameters(source, target);
+
+        assertThat(target.getEmploymentType()).isNull();
+        assertThat(target.getSalaryMin()).isNull();
+        assertThat(target.getSalaryMax()).isEqualByComparingTo("25000");
+        assertThat(target.getCurrency()).isEqualTo("PLN");
+        assertThat(target.getSalaryUnit()).isEqualTo("MONTH");
+        assertThat(target.getSalaryType()).isEqualTo(SalaryType.UNKNOWN);
     }
 }
