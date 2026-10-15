@@ -1,9 +1,11 @@
 package pl.easyoffer.offer_service.service.calculator;
 
 import org.junit.jupiter.api.Test;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
 import pl.easyoffer.offer_service.model.to.SalaryTrendPointTO;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,18 +16,25 @@ import static org.assertj.core.api.Assertions.tuple;
 
 class SalaryAnalyticsCalculatorTest {
 
-    private final SalaryAnalyticsCalculator calculator = new SalaryAnalyticsCalculator();
+    private final SalaryAnalyticsCalculator calculator = new SalaryAnalyticsCalculator(
+            new SalaryComparabilityPolicy()
+    );
 
     @Test
-    void shouldCalculateCategoryStatisticsAndKeepSalaryDimensionsSeparate() {
+    void shouldCalculateComparableMonthlyPlnStatisticsWithoutMixingEmploymentOrSalaryTypes() {
         // given
+        OfferEntity netB2b = offer(
+                "Java", "Mid", "12000", "16000", "PLN", "month", "b2b"
+        );
+        netB2b.setSalaryType(SalaryType.NET);
         List<OfferEntity> offers = List.of(
                 offer("Java", "Mid", "10000", "14000", "PLN", "month", "b2b"),
                 offer("Java", "Mid", "14000", "18000", "PLN", "month", "b2b"),
                 offer("Java", "Mid", "18000", "22000", "PLN", "month", "b2b"),
                 offer("Java", "Mid", "3000", "4000", "EUR", "month", "b2b"),
                 offer("Java", "Mid", "100", "120", "PLN", "hour", "b2b"),
-                offer("Java", "Mid", "9000", "11000", "PLN", "month", "employment")
+                offer("Java", "Mid", "9000", "11000", "PLN", "month", "employment"),
+                netB2b
         );
 
         // when
@@ -38,15 +47,24 @@ class SalaryAnalyticsCalculatorTest {
                         SalaryStatisticTO::getCurrency,
                         SalaryStatisticTO::getSalaryUnit,
                         SalaryStatisticTO::getEmploymentType,
+                        SalaryStatisticTO::getSalaryType,
                         SalaryStatisticTO::getAverageSalary,
                         SalaryStatisticTO::getMedianSalary,
                         SalaryStatisticTO::getOffersCount
                 )
                 .containsExactly(
-                        tuple("Java", "EUR", "month", "b2b", decimal("3500.00"), decimal("3500.00"), 1L),
-                        tuple("Java", "PLN", "hour", "b2b", decimal("110.00"), decimal("110.00"), 1L),
-                        tuple("Java", "PLN", "month", "b2b", decimal("16000.00"), decimal("16000.00"), 3L),
-                        tuple("Java", "PLN", "month", "employment", decimal("10000.00"), decimal("10000.00"), 1L)
+                        tuple(
+                                "Java", "PLN", "MONTH", "B2B", SalaryType.GROSS,
+                                decimal("16620.00"), decimal("17240.00"), 4L
+                        ),
+                        tuple(
+                                "Java", "PLN", "MONTH", "B2B", SalaryType.NET,
+                                decimal("14000.00"), decimal("14000.00"), 1L
+                        ),
+                        tuple(
+                                "Java", "PLN", "MONTH", "EMPLOYMENT", SalaryType.GROSS,
+                                decimal("10000.00"), decimal("10000.00"), 1L
+                        )
                 );
     }
 
@@ -155,6 +173,7 @@ class SalaryAnalyticsCalculatorTest {
         offer.setCurrency(currency);
         offer.setSalaryUnit(salaryUnit);
         offer.setEmploymentType(employmentType);
+        offer.setSalaryType(SalaryType.GROSS);
         return offer;
     }
 

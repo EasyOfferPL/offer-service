@@ -2,6 +2,7 @@ package pl.easyoffer.offer_service.model.to;
 
 import lombok.Getter;
 import lombok.Setter;
+import pl.easyoffer.offer_service.model.SalaryType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class OfferResponseTO {
     private BigDecimal salaryMax;
     private String salaryUnit;
     private String currency;
+    private SalaryType salaryType;
     private String source;
     private String url;
     private String language;

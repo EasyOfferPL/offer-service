@@ -8,11 +8,15 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.easyoffer.offer_service.exception.ValidationException;
 import pl.easyoffer.offer_service.model.OfferSearchRequest;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.SalaryUnit;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
+import pl.easyoffer.offer_service.service.calculator.SalaryComparabilityAuditCalculator;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
@@ -22,6 +26,9 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.springframework.util.StringUtils.hasText;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +40,7 @@ public class AnalyticsService {
     private final OfferPersistenceService offerPersistenceService;
     private final TechnologyPersistenceService technologyPersistenceService;
     private final SalaryAnalyticsCalculator salaryAnalyticsCalculator;
+    private final SalaryComparabilityAuditCalculator salaryComparabilityAuditCalculator;
     private final TechnologyNormalizer technologyNormalizer;
 
     public List<OfferResponseTO> retrieveNewestOffers() {
@@ -173,10 +181,19 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
+    public SalaryComparabilityAuditTO getSalaryComparabilityAudit() {
+        try (Stream<SalaryComparabilityInput> inputs =
+                     offerPersistenceService.streamSalaryComparabilityInputs()) {
+            return salaryComparabilityAuditCalculator.calculate(inputs);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public SalaryTrendTO getSalaryTrend(
             String categoryName,
             String currency,
             String employmentType,
+            SalaryType salaryType,
             String experienceLevel,
             LocalDateTime dateFrom,
             LocalDateTime dateTo
@@ -184,16 +201,34 @@ public class AnalyticsService {
         if (dateFrom.isAfter(dateTo)) {
             throw new ValidationException("dateFrom must not be after dateTo");
         }
+        if (!SalaryComparabilityPolicy.COMPARABLE_CURRENCY.equalsIgnoreCase(currency)) {
+            throw new ValidationException("Only PLN salaries are comparable");
+        }
+        if (!hasText(employmentType)) {
+            throw new ValidationException("employmentType must not be blank");
+        }
+        if (salaryType == null || salaryType == SalaryType.UNKNOWN) {
+            throw new ValidationException("salaryType must be GROSS or NET");
+        }
+
+        String normalizedEmploymentType = employmentType.trim().toUpperCase(Locale.ROOT);
 
         List<OfferEntity> offers = offerPersistenceService.findForSalaryTrend(
-                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+                categoryName,
+                SalaryComparabilityPolicy.COMPARABLE_CURRENCY,
+                normalizedEmploymentType,
+                salaryType,
+                experienceLevel,
+                dateFrom,
+                dateTo
         );
         return SalaryTrendTO.builder()
                 .categoryName(categoryName)
-                .currency(currency)
-                .employmentType(employmentType)
+                .currency(SalaryComparabilityPolicy.COMPARABLE_CURRENCY)
+                .employmentType(normalizedEmploymentType)
                 .experienceLevel(experienceLevel)
                 .salaryUnit(SalaryUnit.MONTH.name())
+                .salaryType(salaryType)
                 .points(salaryAnalyticsCalculator.calculateMonthlyTrend(offers, dateFrom, dateTo))
                 .build();
     }

@@ -2,6 +2,7 @@ package pl.easyoffer.offer_service.mapper;
 
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItLanguage;
 import pl.easyoffer.offer_service.model.to.justjoinit.JustJoinItOffer;
@@ -53,6 +54,7 @@ public interface JustJoinItOfferMapper {
                     target.setSalaryMax(originalEmploymentType.getToPerUnit());
                     target.setEmploymentType(originalEmploymentType.getType());
                     target.setSalaryUnit(originalEmploymentType.getUnit().toUpperCase());
+                    target.setSalaryType(SalaryType.fromGross(originalEmploymentType.getGross()));
                 });
     }
 

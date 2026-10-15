@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.service.AnalyticsService;
 
@@ -75,17 +76,24 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getTechnologyNormalizationAudit());
     }
 
+    @GetMapping("/salary-comparability-audit")
+    public ResponseEntity<SalaryComparabilityAuditTO> getSalaryComparabilityAudit() {
+        return ResponseEntity.ok(analyticsService.getSalaryComparabilityAudit());
+    }
+
     @GetMapping("/salaries/trend")
     public ResponseEntity<SalaryTrendTO> getSalaryTrend(
             @RequestParam String categoryName,
             @RequestParam String currency,
             @RequestParam String employmentType,
+            @RequestParam(defaultValue = "GROSS") SalaryType salaryType,
             @RequestParam(required = false) String experienceLevel,
             @RequestParam LocalDateTime dateFrom,
             @RequestParam LocalDateTime dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getSalaryTrend(
-                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+                categoryName, currency, employmentType, salaryType,
+                experienceLevel, dateFrom, dateTo
         ));
     }
 

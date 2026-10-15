@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldNameConstants;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 
 import java.math.BigDecimal;
@@ -73,6 +74,10 @@ public class OfferEntity extends AbstractAuditingEntity<Long> {
 
     @Column(name = "CURRENCY", length = 3)
     private String currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "SALARY_TYPE", nullable = false, length = 20)
+    private SalaryType salaryType = SalaryType.UNKNOWN;
 
     @Column(name = "SOURCE", nullable = false, length = 100)
     private String source = JobOfferSourceType.MANUAL.name();

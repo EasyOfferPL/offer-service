@@ -2,7 +2,8 @@ package pl.easyoffer.offer_service.service.calculator;
 
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.SalaryTrendPointTO;
-import pl.easyoffer.offer_service.util.SalaryUtil;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,9 +21,12 @@ final class SalaryTrendCalculator {
     static List<SalaryTrendPointTO> calculate(
             List<OfferEntity> offers,
             LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            LocalDateTime dateTo,
+            SalaryComparabilityPolicy comparabilityPolicy
     ) {
-        Map<YearMonth, List<BigDecimal>> salariesByMonth = groupSalariesByMonth(offers);
+        Map<YearMonth, List<BigDecimal>> salariesByMonth = groupSalariesByMonth(
+                offers, comparabilityPolicy
+        );
         return buildMonthlyTrend(
                 salariesByMonth,
                 YearMonth.from(dateFrom),
@@ -30,19 +34,22 @@ final class SalaryTrendCalculator {
         );
     }
 
-    private static Map<YearMonth, List<BigDecimal>> groupSalariesByMonth(List<OfferEntity> offers) {
+    private static Map<YearMonth, List<BigDecimal>> groupSalariesByMonth(
+            List<OfferEntity> offers,
+            SalaryComparabilityPolicy comparabilityPolicy
+    ) {
         Map<YearMonth, List<BigDecimal>> salariesByMonth = new TreeMap<>();
 
         for (OfferEntity offer : offers) {
-            BigDecimal monthlySalary = SalaryUtil.resolveMonthlySalary(offer);
+            var assessment = comparabilityPolicy.assess(SalaryComparabilityInput.from(offer));
             LocalDateTime publicationOrCreationDate = resolvePublicationOrCreationDate(offer);
-            if (monthlySalary == null || publicationOrCreationDate == null) {
+            if (!assessment.usable() || publicationOrCreationDate == null) {
                 continue;
             }
 
             YearMonth publicationMonth = YearMonth.from(publicationOrCreationDate);
             salariesByMonth.computeIfAbsent(publicationMonth, ignored -> new ArrayList<>())
-                    .add(monthlySalary);
+                    .add(assessment.monthlySalary());
         }
 
         return salariesByMonth;

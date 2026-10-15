@@ -2,6 +2,7 @@ package pl.easyoffer.offer_service.model.to;
 
 import lombok.Builder;
 import lombok.Data;
+import pl.easyoffer.offer_service.model.SalaryType;
 
 import java.math.BigDecimal;
 
@@ -13,6 +14,7 @@ public class SalaryStatisticTO {
     private String currency;
     private String salaryUnit;
     private String employmentType;
+    private SalaryType salaryType;
     private BigDecimal averageSalary;
     private BigDecimal medianSalary;
     private long offersCount;

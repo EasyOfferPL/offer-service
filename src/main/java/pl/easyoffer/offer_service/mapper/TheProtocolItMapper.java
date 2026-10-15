@@ -5,6 +5,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.springframework.util.CollectionUtils;
 import pl.easyoffer.offer_service.model.EuropeanCurrency;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
 import pl.easyoffer.offer_service.model.to.TechnologyTO;
 import pl.easyoffer.offer_service.model.to.theprotocolit.*;
@@ -112,6 +113,7 @@ public interface TheProtocolItMapper {
                     target.setSalaryMax(salary.getTo());
                     target.setSalaryUnit(determineSalaryUnit(salary));
                     target.setCurrency(determineSalaryCurrency(salary));
+                    target.setSalaryType(SalaryType.fromSourceValue(salary.getKindName()));
                 });
     }
 

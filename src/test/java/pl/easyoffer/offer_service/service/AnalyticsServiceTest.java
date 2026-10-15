@@ -7,12 +7,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.easyoffer.offer_service.exception.ValidationException;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.SalaryAnalyticsTO;
+import pl.easyoffer.offer_service.model.to.SalaryComparabilityAuditTO;
 import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
 import pl.easyoffer.offer_service.model.to.SalaryTrendTO;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
+import pl.easyoffer.offer_service.service.calculator.SalaryComparabilityAuditCalculator;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
@@ -21,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,11 +49,13 @@ class AnalyticsServiceTest {
 
     @BeforeEach
     void setUp() {
+        SalaryComparabilityPolicy salaryComparabilityPolicy = new SalaryComparabilityPolicy();
         analyticsService = new AnalyticsService(
                 offerService,
                 offerPersistenceService,
                 technologyPersistenceService,
-                new SalaryAnalyticsCalculator(),
+                new SalaryAnalyticsCalculator(salaryComparabilityPolicy),
+                new SalaryComparabilityAuditCalculator(salaryComparabilityPolicy),
                 new TechnologyNormalizer()
         );
     }
@@ -134,7 +142,7 @@ class AnalyticsServiceTest {
     }
 
     @Test
-    void shouldNotMixCurrenciesSalaryUnitsOrEmploymentTypes() {
+    void shouldNormalizeSalaryUnitsExcludeOtherCurrenciesAndKeepEmploymentTypesSeparate() {
         // given
         OfferEntity plnMonthlyB2b = offer("Java", "Mid", "10000", "12000");
         OfferEntity eurMonthlyB2b = offer("Java", "Mid", "3000", "4000");
@@ -151,8 +159,52 @@ class AnalyticsServiceTest {
         SalaryAnalyticsTO result = analyticsService.getSalaryAnalytics(null, null);
 
         // then
-        assertThat(result.getByCategory()).hasSize(4);
-        assertThat(result.getByCategory()).allMatch(statistic -> statistic.getOffersCount() == 1);
+        assertThat(result.getByCategory())
+                .extracting(
+                        SalaryStatisticTO::getCurrency,
+                        SalaryStatisticTO::getSalaryUnit,
+                        SalaryStatisticTO::getEmploymentType,
+                        SalaryStatisticTO::getSalaryType,
+                        SalaryStatisticTO::getAverageSalary,
+                        SalaryStatisticTO::getOffersCount
+                )
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple(
+                                "PLN", "MONTH", "B2B", SalaryType.GROSS,
+                                new BigDecimal("14740.00"), 2L
+                        ),
+                        org.assertj.core.groups.Tuple.tuple(
+                                "PLN", "MONTH", "EMPLOYMENT", SalaryType.GROSS,
+                                new BigDecimal("10000.00"), 1L
+                        )
+                );
+    }
+
+    @Test
+    void shouldReturnSalaryComparabilityAudit() {
+        // given
+        when(offerPersistenceService.streamSalaryComparabilityInputs()).thenReturn(Stream.of(
+                salaryInput("10000", "14000", "PLN", "MONTH", "B2B", SalaryType.GROSS),
+                salaryInput(null, "120", "PLN", "HOUR", "B2B", SalaryType.NET),
+                salaryInput(null, null, "PLN", "MONTH", "B2B", SalaryType.GROSS),
+                salaryInput("3000", "4000", "EUR", "MONTH", "B2B", SalaryType.GROSS),
+                salaryInput("9000", "11000", "PLN", "MONTH", "employment", SalaryType.UNKNOWN)
+        ));
+
+        // when
+        SalaryComparabilityAuditTO result = analyticsService.getSalaryComparabilityAudit();
+
+        // then
+        assertThat(result.getNormalizationVersion()).isEqualTo("v1");
+        assertThat(result.getRawOfferCount()).isEqualTo(5);
+        assertThat(result.getSalaryPresentOfferCount()).isEqualTo(4);
+        assertThat(result.getUsableOfferCount()).isEqualTo(2);
+        assertThat(result.getExcludedOfferCount()).isEqualTo(3);
+        assertThat(result.getUsableSingleBoundaryOfferCount()).isEqualTo(1);
+        assertThat(result.getExclusionCounts())
+                .containsEntry("MISSING_SALARY", 1L)
+                .containsEntry("UNSUPPORTED_CURRENCY", 1L)
+                .containsEntry("UNKNOWN_SALARY_TYPE", 1L);
     }
 
     @Test
@@ -167,16 +219,18 @@ class AnalyticsServiceTest {
                 datedOffer("YEAR", "201600", LocalDateTime.of(2026, 1, 20, 12, 0))
         );
         when(offerPersistenceService.findForSalaryTrend(
-                "Java", "PLN", "b2b", "Senior", dateFrom, dateTo
+                "Java", "PLN", "B2B", SalaryType.GROSS, "Senior", dateFrom, dateTo
         )).thenReturn(offers);
 
         // when
         SalaryTrendTO result = analyticsService.getSalaryTrend(
-                "Java", "PLN", "b2b", "Senior", dateFrom, dateTo
+                "Java", "PLN", "b2b", SalaryType.GROSS, "Senior", dateFrom, dateTo
         );
 
         // then
         assertThat(result.getSalaryUnit()).isEqualTo("MONTH");
+        assertThat(result.getSalaryType()).isEqualTo(SalaryType.GROSS);
+        assertThat(result.getEmploymentType()).isEqualTo("B2B");
         assertThat(result.getPoints()).hasSize(3);
         assertThat(result.getPoints().getFirst().getMonth()).isEqualTo("2026-01");
         assertThat(result.getPoints().getFirst().getAverageSalary()).isEqualByComparingTo("16800.00");
@@ -195,7 +249,7 @@ class AnalyticsServiceTest {
 
         // when
         ThrowingCallable action = () -> analyticsService.getSalaryTrend(
-                "Java", "PLN", "b2b", null, dateFrom, dateTo
+                "Java", "PLN", "b2b", SalaryType.GROSS, null, dateFrom, dateTo
         );
 
         // then
@@ -215,8 +269,22 @@ class AnalyticsServiceTest {
         offer.setCurrency("PLN");
         offer.setSalaryUnit("month");
         offer.setEmploymentType("b2b");
+        offer.setSalaryType(SalaryType.GROSS);
         offer.setTechnologies(technologies.stream().map(this::technology).collect(java.util.stream.Collectors.toSet()));
         return offer;
+    }
+
+    private SalaryComparabilityInput salaryInput(
+            String salaryMin,
+            String salaryMax,
+            String currency,
+            String salaryUnit,
+            String employmentType,
+            SalaryType salaryType
+    ) {
+        return new SalaryComparabilityInput(
+                decimal(salaryMin), decimal(salaryMax), currency, salaryUnit, employmentType, salaryType
+        );
     }
 
     private TechnologyEntity technology(String name) {

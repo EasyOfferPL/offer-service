@@ -5,15 +5,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.OfferRepository;
 import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
+import pl.easyoffer.offer_service.repository.projection.SalaryComparabilityInputProjection;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -91,16 +95,36 @@ public class OfferPersistenceService {
         return offerRepository.findForSalaryAnalytics(categoryName, experienceLevel);
     }
 
+    public Stream<SalaryComparabilityInput> streamSalaryComparabilityInputs() {
+        return offerRepository.streamSalaryComparabilityInputs()
+                .map(OfferPersistenceService::toSalaryComparabilityInput);
+    }
+
     public List<OfferEntity> findForSalaryTrend(
             String categoryName,
             String currency,
             String employmentType,
+            SalaryType salaryType,
             String experienceLevel,
             LocalDateTime dateFrom,
             LocalDateTime dateTo
     ) {
         return offerRepository.findForSalaryTrend(
-                categoryName, currency, employmentType, experienceLevel, dateFrom, dateTo
+                categoryName, currency, employmentType, salaryType,
+                experienceLevel, dateFrom, dateTo
+        );
+    }
+
+    private static SalaryComparabilityInput toSalaryComparabilityInput(
+            SalaryComparabilityInputProjection projection
+    ) {
+        return new SalaryComparabilityInput(
+                projection.getSalaryMin(),
+                projection.getSalaryMax(),
+                projection.getCurrency(),
+                projection.getSalaryUnit(),
+                projection.getEmploymentType(),
+                projection.getSalaryType()
         );
     }
 

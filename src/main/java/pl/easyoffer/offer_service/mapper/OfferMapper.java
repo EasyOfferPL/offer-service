@@ -4,6 +4,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 import org.springframework.util.StringUtils;
 import pl.easyoffer.offer_service.model.JobOfferSourceType;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 import pl.easyoffer.offer_service.model.to.OfferRequestTO;
@@ -38,7 +39,6 @@ public interface OfferMapper {
 
     @AfterMapping
     default void normalizeRequest(@MappingTarget OfferRequestTO request) {
-        //todo create normalizer
         request.setExternalId(trimToNull(request.getExternalId()));
         request.setTitle(trimToNull(request.getTitle()));
         request.setCompanyName(trimToNull(request.getCompanyName()));
@@ -47,6 +47,8 @@ public interface OfferMapper {
         request.setEmploymentType(trimToNull(request.getEmploymentType()));
         request.setWorkMode(trimToNull(request.getWorkMode()));
         request.setCurrency(trimToNull(request.getCurrency()));
+        request.setSalaryType(Optional.ofNullable(request.getSalaryType())
+                .orElse(SalaryType.UNKNOWN));
         request.setSource(defaultSource(request.getSource()));
         request.setUrl(trimToNull(request.getUrl()));
     }

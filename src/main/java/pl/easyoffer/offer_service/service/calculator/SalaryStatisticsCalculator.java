@@ -2,9 +2,11 @@ package pl.easyoffer.offer_service.service.calculator;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
-import pl.easyoffer.offer_service.util.SalaryUtil;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
+import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -20,14 +22,16 @@ final class SalaryStatisticsCalculator {
             .comparing(SalaryStatisticTO::getGroupValue)
             .thenComparing(SalaryStatisticTO::getCurrency, NULL_SAFE_TEXT_ORDER)
             .thenComparing(SalaryStatisticTO::getSalaryUnit, NULL_SAFE_TEXT_ORDER)
-            .thenComparing(SalaryStatisticTO::getEmploymentType, NULL_SAFE_TEXT_ORDER);
+            .thenComparing(SalaryStatisticTO::getEmploymentType, NULL_SAFE_TEXT_ORDER)
+            .thenComparing(SalaryStatisticTO::getSalaryType);
 
 
     static List<SalaryStatisticTO> calculate(
             List<OfferEntity> offers,
-            Function<OfferEntity, String> groupValueExtractor
+            Function<OfferEntity, String> groupValueExtractor,
+            SalaryComparabilityPolicy comparabilityPolicy
     ) {
-        return groupSalaries(offers, groupValueExtractor).entrySet().stream()
+        return groupSalaries(offers, groupValueExtractor, comparabilityPolicy).entrySet().stream()
                 .map(entry -> createStatistic(entry.getKey(), entry.getValue()))
                 .sorted(STATISTIC_ORDER)
                 .toList();
@@ -35,19 +39,25 @@ final class SalaryStatisticsCalculator {
 
     private static Map<SalaryGroup, List<BigDecimal>> groupSalaries(
             List<OfferEntity> offers,
-            Function<OfferEntity, String> groupValueExtractor
+            Function<OfferEntity, String> groupValueExtractor,
+            SalaryComparabilityPolicy comparabilityPolicy
     ) {
         Map<SalaryGroup, List<BigDecimal>> salariesByGroup = new HashMap<>();
 
         for (OfferEntity offer : offers) {
-            BigDecimal representativeSalary = SalaryUtil.resolveRepresentativeSalary(offer);
             String groupValue = groupValueExtractor.apply(offer);
-            if (representativeSalary == null || !hasText(groupValue)) {
+            var assessment = comparabilityPolicy.assess(SalaryComparabilityInput.from(offer));
+            if (!assessment.usable() || !hasText(groupValue)) {
                 continue;
             }
 
-            SalaryGroup group = SalaryGroup.from(groupValue, offer);
-            salariesByGroup.computeIfAbsent(group, ignored -> new ArrayList<>()).add(representativeSalary);
+            SalaryGroup group = new SalaryGroup(
+                    groupValue,
+                    assessment.employmentType(),
+                    assessment.salaryType()
+            );
+            salariesByGroup.computeIfAbsent(group, ignored -> new ArrayList<>())
+                    .add(assessment.monthlySalary());
         }
 
         return salariesByGroup;
@@ -58,24 +68,20 @@ final class SalaryStatisticsCalculator {
 
         return SalaryStatisticTO.builder()
                 .groupValue(group.groupValue())
-                .currency(group.currency())
-                .salaryUnit(group.salaryUnit())
+                .currency(SalaryComparabilityPolicy.COMPARABLE_CURRENCY)
+                .salaryUnit(SalaryComparabilityPolicy.COMPARABLE_SALARY_UNIT)
                 .employmentType(group.employmentType())
+                .salaryType(group.salaryType())
                 .averageSalary(summary.averageSalary())
                 .medianSalary(summary.medianSalary())
                 .offersCount(summary.offersCount())
                 .build();
     }
 
-    private record SalaryGroup(String groupValue, String currency, String salaryUnit, String employmentType) {
-
-        private static SalaryGroup from(String groupValue, OfferEntity offer) {
-            return new SalaryGroup(
-                    groupValue,
-                    offer.getCurrency(),
-                    offer.getSalaryUnit(),
-                    offer.getEmploymentType()
-            );
-        }
+    private record SalaryGroup(
+            String groupValue,
+            String employmentType,
+            SalaryType salaryType
+    ) {
     }
 }

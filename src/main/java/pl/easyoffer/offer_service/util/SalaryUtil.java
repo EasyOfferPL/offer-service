@@ -26,8 +26,13 @@ public class SalaryUtil {
     }
 
     public static BigDecimal resolveRepresentativeSalary(OfferEntity offer) {
-        BigDecimal minimum = offer.getSalaryMin();
-        BigDecimal maximum = offer.getSalaryMax();
+        return resolveRepresentativeSalary(offer.getSalaryMin(), offer.getSalaryMax());
+    }
+
+    public static BigDecimal resolveRepresentativeSalary(
+            BigDecimal minimum,
+            BigDecimal maximum
+    ) {
         if (minimum == null) {
             return BigDecimalUtil.scale(SALARY_SCALE, maximum);
         }
@@ -41,11 +46,19 @@ public class SalaryUtil {
     }
 
     public static BigDecimal resolveMonthlySalary(OfferEntity offer) {
-        BigDecimal salary = resolveRepresentativeSalary(offer);
-        if (salary == null || offer.getSalaryUnit() == null) {
+        SalaryUnit salaryUnit = EnumUtils.getEnum(SalaryUnit.class, offer.getSalaryUnit(), null);
+        return resolveMonthlySalary(offer.getSalaryMin(), offer.getSalaryMax(), salaryUnit);
+    }
+
+    public static BigDecimal resolveMonthlySalary(
+            BigDecimal minimum,
+            BigDecimal maximum,
+            SalaryUnit salaryUnit
+    ) {
+        BigDecimal salary = resolveRepresentativeSalary(minimum, maximum);
+        if (salary == null || salaryUnit == null) {
             return null;
         }
-        SalaryUnit salaryUnit = EnumUtils.getEnum(SalaryUnit.class, offer.getSalaryUnit(), null);
         return switch (salaryUnit) {
             case HOUR -> BigDecimalUtil.scale(SALARY_SCALE,
                     salary.multiply(BigDecimal.valueOf(WORKING_HOURS_PER_MONTH)));

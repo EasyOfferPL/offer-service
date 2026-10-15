@@ -2,6 +2,7 @@ package pl.easyoffer.offer_service.model.to;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import pl.easyoffer.offer_service.model.SalaryType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,6 +40,8 @@ public class OfferRequestTO {
     private String salaryUnit;
 
     private String currency;
+
+    private SalaryType salaryType;
 
     private String source;
 

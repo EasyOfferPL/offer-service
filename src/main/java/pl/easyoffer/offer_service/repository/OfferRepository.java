@@ -5,14 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
 import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
+import pl.easyoffer.offer_service.repository.projection.SalaryComparabilityInputProjection;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSpecificationExecutor<OfferEntity> {
 
@@ -99,12 +102,24 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
     );
 
     @Query("""
+            SELECT oe.salaryMin AS salaryMin,
+                   oe.salaryMax AS salaryMax,
+                   oe.currency AS currency,
+                   oe.salaryUnit AS salaryUnit,
+                   oe.employmentType AS employmentType,
+                   oe.salaryType AS salaryType
+            FROM OfferEntity oe
+            """)
+    Stream<SalaryComparabilityInputProjection> streamSalaryComparabilityInputs();
+
+    @Query("""
             SELECT oe
             FROM OfferEntity oe
             WHERE (oe.salaryMin IS NOT NULL OR oe.salaryMax IS NOT NULL)
               AND oe.category = :categoryName
-              AND oe.currency = :currency
-              AND oe.employmentType = :employmentType
+              AND UPPER(TRIM(oe.currency)) = :currency
+              AND UPPER(TRIM(oe.employmentType)) = :employmentType
+              AND oe.salaryType = :salaryType
               AND (:experienceLevel IS NULL OR oe.experienceLevel = :experienceLevel)
               AND COALESCE(oe.publishedAt, oe.createdAt) BETWEEN :dateFrom AND :dateTo
             """)
@@ -112,6 +127,7 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             @Param("categoryName") String categoryName,
             @Param("currency") String currency,
             @Param("employmentType") String employmentType,
+            @Param("salaryType") SalaryType salaryType,
             @Param("experienceLevel") String experienceLevel,
             @Param("dateFrom") LocalDateTime dateFrom,
             @Param("dateTo") LocalDateTime dateTo
