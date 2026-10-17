@@ -25,6 +25,9 @@ public class AnalyticsController {
     private static final String FIRST_GROUP_PAGE = "0";
     private static final String DEFAULT_GROUP_PAGE_SIZE = "50";
     private static final int MAX_GROUP_PAGE_SIZE = 100;
+    private static final String FIRST_TECHNOLOGY_PAGE = "0";
+    private static final String DEFAULT_TECHNOLOGY_PAGE_SIZE = "50";
+    private static final int MAX_TECHNOLOGY_PAGE_SIZE = 500;
 
     private final AnalyticsService analyticsService;
 
@@ -43,6 +46,21 @@ public class AnalyticsController {
             @RequestParam LocalDateTime dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getTechnologiesAnalytics(categoryName, dateFrom, dateTo));
+    }
+
+    @GetMapping("/technologies/popularity")
+    public ResponseEntity<TechnologyPopularityTO> getTechnologyPopularity(
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) List<String> sources,
+            @RequestParam LocalDateTime dateFrom,
+            @RequestParam LocalDateTime dateTo,
+            @RequestParam(defaultValue = FIRST_TECHNOLOGY_PAGE) @Min(0) int page,
+            @RequestParam(defaultValue = DEFAULT_TECHNOLOGY_PAGE_SIZE)
+            @Min(1) @Max(MAX_TECHNOLOGY_PAGE_SIZE) int size
+    ) {
+        return ResponseEntity.ok(analyticsService.getTechnologyPopularity(
+                categoryName, sources, dateFrom, dateTo, page, size
+        ));
     }
 
     @GetMapping("/technologies/trend")

@@ -16,6 +16,7 @@ import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
 import pl.easyoffer.offer_service.model.to.SalaryTrendTO;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
 import pl.easyoffer.offer_service.service.calculator.SalaryComparabilityAuditCalculator;
+import pl.easyoffer.offer_service.service.calculator.TechnologyPopularityCalculator;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
@@ -56,7 +57,8 @@ class AnalyticsServiceTest {
                 technologyPersistenceService,
                 new SalaryAnalyticsCalculator(salaryComparabilityPolicy),
                 new SalaryComparabilityAuditCalculator(salaryComparabilityPolicy),
-                new TechnologyNormalizer()
+                new TechnologyNormalizer(),
+                new TechnologyPopularityCalculator()
         );
     }
 

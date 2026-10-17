@@ -15,16 +15,20 @@ import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
 import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
 import pl.easyoffer.offer_service.service.calculator.SalaryComparabilityAuditCalculator;
+import pl.easyoffer.offer_service.service.calculator.TechnologyPopularityCalculation;
+import pl.easyoffer.offer_service.service.calculator.TechnologyPopularityCalculator;
+import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,6 +39,8 @@ import static org.springframework.util.StringUtils.hasText;
 public class AnalyticsService {
 
     private static final int SHORT_ANALYTICS_PAGE_SIZE_LIMIT = 10;
+    private static final int TECHNOLOGY_SHARE_SCALE = 4;
+    private static final String TECHNOLOGY_POPULARITY_PERIOD_FIELD = "PUBLISHED_AT";
 
     private final OfferService offerService;
     private final OfferPersistenceService offerPersistenceService;
@@ -42,6 +48,7 @@ public class AnalyticsService {
     private final SalaryAnalyticsCalculator salaryAnalyticsCalculator;
     private final SalaryComparabilityAuditCalculator salaryComparabilityAuditCalculator;
     private final TechnologyNormalizer technologyNormalizer;
+    private final TechnologyPopularityCalculator technologyPopularityCalculator;
 
     public List<OfferResponseTO> retrieveNewestOffers() {
         OfferSearchRequest searchRequest = OfferSearchRequest.builder()
@@ -52,25 +59,56 @@ public class AnalyticsService {
         return offerService.search(searchRequest, pageable).getContent();
     }
 
-    public List<TechnologiesAnalyticsTO> getTechnologiesAnalytics(String categoryName, LocalDateTime from, LocalDateTime to) {
-        OfferSearchRequest searchRequest = OfferSearchRequest.builder()
-                .categoryNames(List.of(categoryName))
-                .updatedAtFrom(from)
-                .updatedAtTo(to)
-                .build();
-        return offerService.search(searchRequest).stream()
-                .map(OfferResponseTO::getTechnologies)
-                .flatMap(Collection::stream)
-                .collect(Collectors.groupingBy(
-                        Function.identity(),
-                        Collectors.counting()
-                )).entrySet()
-                .stream()
-                .map(entry -> TechnologiesAnalyticsTO.builder()
-                        .technologyName(entry.getKey())
-                        .count(entry.getValue())
+    public List<TechnologiesAnalyticsTO> getTechnologiesAnalytics(
+            String categoryName,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        TechnologyPopularityAnalysis analysis = analyzeTechnologyPopularity(
+                categoryName, List.of(), from, to
+        );
+        return toTechnologyPopularityItems(analysis.calculation()).stream()
+                .map(technology -> TechnologiesAnalyticsTO.builder()
+                        .technologyName(technology.getTechnologyName())
+                        .count(technology.getCount())
                         .build())
                 .toList();
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public TechnologyPopularityTO getTechnologyPopularity(
+            String categoryName,
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo,
+            int page,
+            int size
+    ) {
+        validatePagination(page, size);
+        TechnologyPopularityAnalysis analysis = analyzeTechnologyPopularity(
+                categoryName, sources, dateFrom, dateTo
+        );
+        TechnologyPopularityCalculation calculation = analysis.calculation();
+        List<TechnologyPopularityItemTO> allTechnologies = toTechnologyPopularityItems(calculation);
+        List<TechnologyPopularityItemTO> technologyPage = page(allTechnologies, page, size);
+
+        return TechnologyPopularityTO.builder()
+                .technologyNormalizationVersion(technologyNormalizer.version())
+                .deduplicationVersion(CrossSourceFingerprintV1.version())
+                .periodField(TECHNOLOGY_POPULARITY_PERIOD_FIELD)
+                .categoryName(analysis.categoryName())
+                .sources(analysis.sources())
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .rawOfferCount(calculation.rawOfferCount())
+                .uniqueOfferCount(calculation.uniqueOfferCount())
+                .eligibleOfferCount(calculation.eligibleOfferCount())
+                .page(page)
+                .size(size)
+                .totalElements(allTechnologies.size())
+                .totalPages(Math.ceilDiv(allTechnologies.size(), (long) size))
+                .technologies(technologyPage)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -198,9 +236,7 @@ public class AnalyticsService {
             LocalDateTime dateFrom,
             LocalDateTime dateTo
     ) {
-        if (dateFrom.isAfter(dateTo)) {
-            throw new ValidationException("dateFrom must not be after dateTo");
-        }
+        validateDateRange(dateFrom, dateTo);
         if (!SalaryComparabilityPolicy.COMPARABLE_CURRENCY.equalsIgnoreCase(currency)) {
             throw new ValidationException("Only PLN salaries are comparable");
         }
@@ -237,6 +273,109 @@ public class AnalyticsService {
         return Objects.nonNull(offer.getPublishedAt()) ? offer.getPublishedAt() : offer.getCreatedAt();
     }
 
+    private List<TechnologyPopularityItemTO> toTechnologyPopularityItems(
+            TechnologyPopularityCalculation calculation
+    ) {
+        return calculation.offerCountsByTechnology().entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed()
+                        .thenComparing(Map.Entry::getKey, String.CASE_INSENSITIVE_ORDER))
+                .map(entry -> TechnologyPopularityItemTO.builder()
+                        .technologyName(entry.getKey())
+                        .count(entry.getValue())
+                        .denominator(calculation.eligibleOfferCount())
+                        .sharePercentage(calculateSharePercentage(
+                                entry.getValue(), calculation.eligibleOfferCount()
+                        ))
+                        .build())
+                .toList();
+    }
+
+    private TechnologyPopularityAnalysis analyzeTechnologyPopularity(
+            String categoryName,
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        validateDateRange(dateFrom, dateTo);
+        String normalizedCategoryName = hasText(categoryName) ? categoryName.trim() : null;
+        List<String> normalizedSources = normalizeSources(sources);
+        List<OfferEntity> offers = offerPersistenceService.findForTechnologyPopularity(
+                normalizedCategoryName, normalizedSources, dateFrom, dateTo
+        );
+        List<String> responseSources = normalizedSources.isEmpty()
+                ? sourcesPresentIn(offers)
+                : normalizedSources;
+        return new TechnologyPopularityAnalysis(
+                normalizedCategoryName,
+                responseSources,
+                technologyPopularityCalculator.calculate(offers)
+        );
+    }
+
+    private List<TechnologyPopularityItemTO> page(
+            List<TechnologyPopularityItemTO> technologies,
+            int page,
+            int size
+    ) {
+        long requestedOffset = (long) page * size;
+        if (requestedOffset >= technologies.size()) {
+            return List.of();
+        }
+        int fromIndex = Math.toIntExact(requestedOffset);
+        int toIndex = Math.toIntExact(Math.min(requestedOffset + size, technologies.size()));
+        return technologies.subList(fromIndex, toIndex);
+    }
+
+    private BigDecimal calculateSharePercentage(long count, long denominator) {
+        if (denominator == 0) {
+            return BigDecimal.ZERO.setScale(TECHNOLOGY_SHARE_SCALE);
+        }
+        return BigDecimal.valueOf(count)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(denominator), TECHNOLOGY_SHARE_SCALE, RoundingMode.HALF_UP);
+    }
+
+    private List<String> normalizeSources(List<String> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return List.of();
+        }
+        if (sources.stream().anyMatch(source -> !hasText(source))) {
+            throw new ValidationException("sources must not contain blank values");
+        }
+        return sources.stream()
+                .map(source -> source.trim().toUpperCase(Locale.ROOT))
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private List<String> sourcesPresentIn(List<OfferEntity> offers) {
+        return offers.stream()
+                .map(OfferEntity::getSource)
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    private void validateDateRange(LocalDateTime dateFrom, LocalDateTime dateTo) {
+        if (dateFrom == null || dateTo == null) {
+            throw new ValidationException("dateFrom and dateTo are required");
+        }
+        if (dateFrom.isAfter(dateTo)) {
+            throw new ValidationException("dateFrom must not be after dateTo");
+        }
+    }
+
+    private void validatePagination(int page, int size) {
+        if (page < 0) {
+            throw new ValidationException("page must not be negative");
+        }
+        if (size < 1) {
+            throw new ValidationException("size must be positive");
+        }
+    }
+
     private DeduplicationAuditOfferTO toDeduplicationAuditOffer(
             DeduplicationAuditOfferProjection offer
     ) {
@@ -245,6 +384,13 @@ public class AnalyticsService {
                 .source(offer.getSource())
                 .externalId(offer.getExternalId())
                 .build();
+    }
+
+    private record TechnologyPopularityAnalysis(
+            String categoryName,
+            List<String> sources,
+            TechnologyPopularityCalculation calculation
+    ) {
     }
 
 }

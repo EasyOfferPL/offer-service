@@ -100,6 +100,36 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
     );
 
     @Query("""
+            SELECT DISTINCT offer
+            FROM OfferEntity offer
+            LEFT JOIN FETCH offer.technologies
+            WHERE (:categoryName IS NULL OR offer.category = :categoryName)
+              AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
+            ORDER BY offer.id
+            """)
+    List<OfferEntity> findForTechnologyPopularity(
+            @Param("categoryName") String categoryName,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
+    @Query("""
+            SELECT DISTINCT offer
+            FROM OfferEntity offer
+            LEFT JOIN FETCH offer.technologies
+            WHERE (:categoryName IS NULL OR offer.category = :categoryName)
+              AND offer.source IN :sources
+              AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
+            ORDER BY offer.id
+            """)
+    List<OfferEntity> findForTechnologyPopularity(
+            @Param("categoryName") String categoryName,
+            @Param("sources") List<String> sources,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
+    @Query("""
             SELECT oe.salaryMin AS salaryMin,
                    oe.salaryMax AS salaryMax,
                    oe.currency AS currency,

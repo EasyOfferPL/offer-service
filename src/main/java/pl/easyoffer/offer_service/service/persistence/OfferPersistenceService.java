@@ -95,6 +95,18 @@ public class OfferPersistenceService {
         return offerRepository.findForSalaryAnalytics(categoryName, experienceLevel);
     }
 
+    public List<OfferEntity> findForTechnologyPopularity(
+            String categoryName,
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        if (sources.isEmpty()) {
+            return offerRepository.findForTechnologyPopularity(categoryName, dateFrom, dateTo);
+        }
+        return offerRepository.findForTechnologyPopularity(categoryName, sources, dateFrom, dateTo);
+    }
+
     public Stream<SalaryComparabilityInput> streamSalaryComparabilityInputs() {
         return offerRepository.streamSalaryComparabilityInputs()
                 .map(OfferPersistenceService::toSalaryComparabilityInput);
