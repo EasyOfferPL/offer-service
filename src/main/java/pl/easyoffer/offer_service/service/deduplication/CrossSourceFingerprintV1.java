@@ -1,5 +1,8 @@
 package pl.easyoffer.offer_service.service.deduplication;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -9,6 +12,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class CrossSourceFingerprintV1 {
 
     public static final int FINGERPRINT_LENGTH = 67;
@@ -18,11 +22,10 @@ public final class CrossSourceFingerprintV1 {
     private static final String COMPONENT_SEPARATOR = ":";
     private static final String PAYLOAD_FIELD_SEPARATOR = "\u001F";
     private static final String NORMALIZED_WHITESPACE = " ";
-    private static final Pattern WHITESPACE = Pattern.compile(
-            "\\s+", Pattern.UNICODE_CHARACTER_CLASS
-    );
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
 
-    private CrossSourceFingerprintV1() {
+    public static String version() {
+        return VERSION;
     }
 
     public static Optional<String> calculate(String title, String companyName, String location) {

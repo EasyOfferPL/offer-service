@@ -4,13 +4,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
-import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
-import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
-import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
-import pl.easyoffer.offer_service.repository.projection.SalaryComparabilityInputProjection;
+import pl.easyoffer.offer_service.repository.projection.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -111,6 +109,61 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             FROM OfferEntity oe
             """)
     Stream<SalaryComparabilityInputProjection> streamSalaryComparabilityInputs();
+
+    @QueryHints({
+            @jakarta.persistence.QueryHint(name = "org.hibernate.fetchSize", value = "1000"),
+            @jakarta.persistence.QueryHint(name = "org.hibernate.readOnly", value = "true")
+    })
+    @Query("""
+            SELECT offer.id AS id,
+                   offer.externalId AS externalId,
+                   offer.title AS title,
+                   offer.companyName AS companyName,
+                   offer.location AS location,
+                   offer.experienceLevel AS experienceLevel,
+                   offer.employmentType AS employmentType,
+                   offer.workMode AS workMode,
+                   offer.workingTime AS workingTime,
+                   offer.salaryMin AS salaryMin,
+                   offer.salaryMax AS salaryMax,
+                   offer.salaryUnit AS salaryUnit,
+                   offer.currency AS currency,
+                   offer.salaryType AS salaryType,
+                   offer.source AS source,
+                   offer.deduplicationFingerprint AS deduplicationFingerprint,
+                   offer.url AS url,
+                   offer.language AS language,
+                   offer.category AS category,
+                   offer.publishedAt AS publishedAt,
+                   offer.expiredAt AS expiredAt,
+                   offer.openToHireUkrainians AS openToHireUkrainians,
+                   offer.version AS version,
+                   offer.createdAt AS createdAt,
+                   offer.updatedAt AS updatedAt
+            FROM OfferEntity offer
+            ORDER BY offer.id
+            """)
+    Stream<OfferDatasetExportProjection> streamDatasetExportRows();
+
+    @QueryHints({
+            @jakarta.persistence.QueryHint(name = "org.hibernate.fetchSize", value = "1000"),
+            @jakarta.persistence.QueryHint(name = "org.hibernate.readOnly", value = "true")
+    })
+    @Query("""
+            SELECT offer.id AS offerId, technology.id AS technologyId
+            FROM OfferEntity offer
+            JOIN offer.technologies technology
+            ORDER BY offer.id, technology.id
+            """)
+    Stream<OfferTechnologyDatasetExportProjection> streamTechnologyDatasetExportRows();
+
+    @Query("""
+            SELECT offer.source AS source, COUNT(offer) AS offerCount
+            FROM OfferEntity offer
+            GROUP BY offer.source
+            ORDER BY offer.source
+            """)
+    List<OfferSourceCountProjection> countOffersBySource();
 
     @Query("""
             SELECT oe

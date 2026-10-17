@@ -1,8 +1,6 @@
 package pl.easyoffer.offer_service.exception;
 
 import jakarta.validation.ConstraintViolationException;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,6 +9,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,6 +26,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ValidationException.class, DuplicateOfferException.class})
     public ResponseEntity<ErrorResponse> handleBusiness(RuntimeException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(DatasetExportForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleDatasetExportForbidden(
+            DatasetExportForbiddenException exception
+    ) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(DatasetExportConflictException.class)
+    public ResponseEntity<ErrorResponse> handleDatasetExportConflict(
+            DatasetExportConflictException exception
+    ) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
