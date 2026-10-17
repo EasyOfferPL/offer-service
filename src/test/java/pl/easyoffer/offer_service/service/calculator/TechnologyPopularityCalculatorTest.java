@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +58,51 @@ class TechnologyPopularityCalculatorTest {
         assertThat(result.offerCountsByTechnology()).containsOnlyKeys("Java");
     }
 
+    @Test
+    void shouldBuildContinuousMonthlyTechnologyCountAndDenominator() {
+        TechnologyTrendCalculation result = calculator.calculateMonthlyTrend(
+                List.of(
+                        datedOffer(2026, 1, 5, "JUST_JOIN_IT", null, "Java"),
+                        datedOffer(2026, 1, 10, "THE_PROTOCOL_IT", null, "Python"),
+                        datedOffer(2026, 1, 15, "JUST_JOIN_IT", null),
+                        datedOffer(2026, 3, 5, "JUST_JOIN_IT", null, "Java")
+                ),
+                "Java",
+                YearMonth.of(2026, 1),
+                YearMonth.of(2026, 3)
+        );
+
+        assertThat(result.rawOfferCount()).isEqualTo(4);
+        assertThat(result.uniqueOfferCount()).isEqualTo(4);
+        assertThat(result.eligibleOfferCount()).isEqualTo(3);
+        assertThat(result.points()).containsExactly(
+                new TechnologyTrendPointCalculation(YearMonth.of(2026, 1), 1, 2),
+                new TechnologyTrendPointCalculation(YearMonth.of(2026, 2), 0, 0),
+                new TechnologyTrendPointCalculation(YearMonth.of(2026, 3), 1, 1)
+        );
+    }
+
+    @Test
+    void shouldAssignCrossSourceGroupToItsEarliestPublicationMonth() {
+        TechnologyTrendCalculation result = calculator.calculateMonthlyTrend(
+                List.of(
+                        datedOffer(2026, 1, 31, "JUST_JOIN_IT", SHARED_FINGERPRINT, "React"),
+                        datedOffer(2026, 2, 1, "THE_PROTOCOL_IT", SHARED_FINGERPRINT, "Java")
+                ),
+                "Java",
+                YearMonth.of(2026, 1),
+                YearMonth.of(2026, 2)
+        );
+
+        assertThat(result.rawOfferCount()).isEqualTo(2);
+        assertThat(result.uniqueOfferCount()).isEqualTo(1);
+        assertThat(result.eligibleOfferCount()).isEqualTo(1);
+        assertThat(result.points()).containsExactly(
+                new TechnologyTrendPointCalculation(YearMonth.of(2026, 1), 1, 1),
+                new TechnologyTrendPointCalculation(YearMonth.of(2026, 2), 0, 0)
+        );
+    }
+
     private OfferEntity offer(String source, String fingerprint, String... technologies) {
         OfferEntity offer = new OfferEntity();
         offer.setSource(source);
@@ -63,6 +110,19 @@ class TechnologyPopularityCalculatorTest {
         offer.setTechnologies(java.util.Arrays.stream(technologies)
                 .map(this::technology)
                 .collect(java.util.stream.Collectors.toSet()));
+        return offer;
+    }
+
+    private OfferEntity datedOffer(
+            int year,
+            int month,
+            int day,
+            String source,
+            String fingerprint,
+            String... technologies
+    ) {
+        OfferEntity offer = offer(source, fingerprint, technologies);
+        offer.setPublishedAt(LocalDateTime.of(year, month, day, 12, 0));
         return offer;
     }
 

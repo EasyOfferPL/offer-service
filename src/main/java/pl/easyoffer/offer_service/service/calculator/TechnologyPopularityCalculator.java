@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.entity.TechnologyEntity;
 
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,14 +16,10 @@ import static org.springframework.util.StringUtils.hasText;
 public class TechnologyPopularityCalculator {
 
     public TechnologyPopularityCalculation calculate(List<OfferEntity> offers) {
-        Set<String> crossSourceFingerprints = findCrossSourceFingerprints(offers);
-        Map<String, List<OfferEntity>> analyticalOffers = groupAnalyticalOffers(
-                offers, crossSourceFingerprints
-        );
-
-        List<Set<String>> eligibleOfferTechnologies = analyticalOffers.values().stream()
-                .map(this::canonicalTechnologies)
-                .filter(technologies -> !technologies.isEmpty())
+        List<AnalyticalTechnologyOffer> analyticalOffers = analyticalOffers(offers);
+        List<Set<String>> eligibleOfferTechnologies = analyticalOffers.stream()
+                .map(AnalyticalTechnologyOffer::canonicalTechnologies)
+                .filter(TechnologyPopularityCalculator::hasTechnologies)
                 .toList();
         Map<String, Long> offerCountsByTechnology = eligibleOfferTechnologies.stream()
                 .flatMap(Collection::stream)
@@ -33,6 +31,52 @@ public class TechnologyPopularityCalculator {
                 eligibleOfferTechnologies.size(),
                 Map.copyOf(offerCountsByTechnology)
         );
+    }
+
+    public TechnologyTrendCalculation calculateMonthlyTrend(
+            List<OfferEntity> offers,
+            String canonicalTechnologyName,
+            YearMonth monthFrom,
+            YearMonth monthTo
+    ) {
+        List<AnalyticalTechnologyOffer> analyticalOffers = analyticalOffers(offers);
+        Map<YearMonth, List<AnalyticalTechnologyOffer>> eligibleOffersByMonth = analyticalOffers.stream()
+                .filter(offer -> offer.publishedAt() != null)
+                .filter(offer -> hasTechnologies(offer.canonicalTechnologies()))
+                .collect(Collectors.groupingBy(
+                        offer -> YearMonth.from(offer.publishedAt()),
+                        TreeMap::new,
+                        Collectors.toList()
+                ));
+
+        List<TechnologyTrendPointCalculation> points = new ArrayList<>();
+        for (YearMonth month = monthFrom; !month.isAfter(monthTo); month = month.plusMonths(1)) {
+            List<AnalyticalTechnologyOffer> eligibleOffers = eligibleOffersByMonth.getOrDefault(
+                    month, List.of()
+            );
+            long technologyOfferCount = eligibleOffers.stream()
+                    .filter(offer -> offer.canonicalTechnologies().contains(canonicalTechnologyName))
+                    .count();
+            points.add(new TechnologyTrendPointCalculation(
+                    month, technologyOfferCount, eligibleOffers.size()
+            ));
+        }
+
+        return new TechnologyTrendCalculation(
+                offers.size(),
+                analyticalOffers.size(),
+                analyticalOffers.stream()
+                        .filter(offer -> hasTechnologies(offer.canonicalTechnologies()))
+                        .count(),
+                List.copyOf(points)
+        );
+    }
+
+    private List<AnalyticalTechnologyOffer> analyticalOffers(List<OfferEntity> offers) {
+        Set<String> crossSourceFingerprints = findCrossSourceFingerprints(offers);
+        return groupAnalyticalOffers(offers, crossSourceFingerprints).values().stream()
+                .map(this::toAnalyticalTechnologyOffer)
+                .toList();
     }
 
     private Set<String> findCrossSourceFingerprints(List<OfferEntity> offers) {
@@ -75,7 +119,31 @@ public class TechnologyPopularityCalculator {
                 .collect(Collectors.toSet());
     }
 
+    private AnalyticalTechnologyOffer toAnalyticalTechnologyOffer(
+            List<OfferEntity> analyticalOfferRows
+    ) {
+        LocalDateTime earliestPublicationDate = analyticalOfferRows.stream()
+                .map(OfferEntity::getPublishedAt)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+        return new AnalyticalTechnologyOffer(
+                earliestPublicationDate,
+                canonicalTechnologies(analyticalOfferRows)
+        );
+    }
+
+    private static boolean hasTechnologies(Set<String> technologies) {
+        return !technologies.isEmpty();
+    }
+
     private static boolean hasTechnologyName(String technologyName) {
         return hasText(technologyName);
+    }
+
+    private record AnalyticalTechnologyOffer(
+            LocalDateTime publishedAt,
+            Set<String> canonicalTechnologies
+    ) {
     }
 }

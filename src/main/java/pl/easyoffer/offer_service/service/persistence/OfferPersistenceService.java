@@ -95,16 +95,16 @@ public class OfferPersistenceService {
         return offerRepository.findForSalaryAnalytics(categoryName, experienceLevel);
     }
 
-    public List<OfferEntity> findForTechnologyPopularity(
+    public List<OfferEntity> findForTechnologyAnalytics(
             String categoryName,
             List<String> sources,
             LocalDateTime dateFrom,
             LocalDateTime dateTo
     ) {
         if (sources.isEmpty()) {
-            return offerRepository.findForTechnologyPopularity(categoryName, dateFrom, dateTo);
+            return offerRepository.findForTechnologyAnalytics(categoryName, dateFrom, dateTo);
         }
-        return offerRepository.findForTechnologyPopularity(categoryName, sources, dateFrom, dateTo);
+        return offerRepository.findForTechnologyAnalytics(categoryName, sources, dateFrom, dateTo);
     }
 
     public Stream<SalaryComparabilityInput> streamSalaryComparabilityInputs() {

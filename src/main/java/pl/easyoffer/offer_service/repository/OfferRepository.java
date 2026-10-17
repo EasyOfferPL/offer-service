@@ -107,7 +107,7 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
               AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
             ORDER BY offer.id
             """)
-    List<OfferEntity> findForTechnologyPopularity(
+    List<OfferEntity> findForTechnologyAnalytics(
             @Param("categoryName") String categoryName,
             @Param("dateFrom") LocalDateTime dateFrom,
             @Param("dateTo") LocalDateTime dateTo
@@ -122,7 +122,7 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
               AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
             ORDER BY offer.id
             """)
-    List<OfferEntity> findForTechnologyPopularity(
+    List<OfferEntity> findForTechnologyAnalytics(
             @Param("categoryName") String categoryName,
             @Param("sources") List<String> sources,
             @Param("dateFrom") LocalDateTime dateFrom,

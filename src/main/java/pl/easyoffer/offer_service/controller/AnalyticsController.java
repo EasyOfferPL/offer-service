@@ -64,12 +64,16 @@ public class AnalyticsController {
     }
 
     @GetMapping("/technologies/trend")
-    public ResponseEntity<List<TechnologyTrendTO>> getTechnologyTrend(
-            @RequestParam String categoryName,
+    public ResponseEntity<TechnologyTrendTO> getTechnologyTrend(
+            @RequestParam String technologyName,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) List<String> sources,
             @RequestParam LocalDateTime dateFrom,
             @RequestParam LocalDateTime dateTo
     ) {
-        return ResponseEntity.ok(analyticsService.getTechnologyTrend(categoryName, dateFrom, dateTo));
+        return ResponseEntity.ok(analyticsService.getTechnologyTrend(
+                technologyName, categoryName, sources, dateFrom, dateTo
+        ));
     }
 
     @GetMapping("/salaries")

@@ -13,10 +13,7 @@ import pl.easyoffer.offer_service.model.SalaryUnit;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.model.to.*;
 import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
-import pl.easyoffer.offer_service.service.calculator.SalaryAnalyticsCalculator;
-import pl.easyoffer.offer_service.service.calculator.SalaryComparabilityAuditCalculator;
-import pl.easyoffer.offer_service.service.calculator.TechnologyPopularityCalculation;
-import pl.easyoffer.offer_service.service.calculator.TechnologyPopularityCalculator;
+import pl.easyoffer.offer_service.service.calculator.*;
 import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
@@ -28,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,6 +39,8 @@ public class AnalyticsService {
     private static final int SHORT_ANALYTICS_PAGE_SIZE_LIMIT = 10;
     private static final int TECHNOLOGY_SHARE_SCALE = 4;
     private static final String TECHNOLOGY_POPULARITY_PERIOD_FIELD = "PUBLISHED_AT";
+    private static final String TECHNOLOGY_TREND_MONTH_ASSIGNMENT = "EARLIEST_PUBLISHED_AT";
+    private static final long MAX_TECHNOLOGY_TREND_MONTHS = 120;
 
     private final OfferService offerService;
     private final OfferPersistenceService offerPersistenceService;
@@ -180,32 +180,55 @@ public class AnalyticsService {
                 .build();
     }
 
-    public List<TechnologyTrendTO> getTechnologyTrend(
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public TechnologyTrendTO getTechnologyTrend(
+            String technologyName,
             String categoryName,
-            LocalDateTime from,
-            LocalDateTime to
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
     ) {
-        OfferSearchRequest searchRequest = OfferSearchRequest.builder()
-                .categoryNames(List.of(categoryName))
-                .build();
+        validateDateRange(dateFrom, dateTo);
+        YearMonth monthFrom = YearMonth.from(dateFrom);
+        YearMonth monthTo = YearMonth.from(dateTo);
+        validateTechnologyTrendRange(monthFrom, monthTo);
+        String canonicalTechnologyName = technologyNormalizer.normalize(technologyName)
+                .map(result -> result.canonicalName())
+                .orElseThrow(() -> new ValidationException("technologyName must not be blank"));
+        TechnologyOfferScope scope = loadTechnologyOffers(
+                categoryName, sources, dateFrom, dateTo
+        );
+        TechnologyTrendCalculation calculation = technologyPopularityCalculator.calculateMonthlyTrend(
+                scope.offers(),
+                canonicalTechnologyName,
+                monthFrom,
+                monthTo
+        );
 
-        return offerService.search(searchRequest).stream()
-                .filter(offer -> {
-                    LocalDateTime date = getPublicationDate(offer);
-                    return !date.isBefore(from) && !date.isAfter(to);
-                })
-                .collect(Collectors.groupingBy(
-                        offer -> YearMonth.from(getPublicationDate(offer)),
-                        TreeMap::new,
-                        Collectors.counting()
-                ))
-                .entrySet()
-                .stream()
-                .map(entry -> TechnologyTrendTO.builder()
-                        .month(entry.getKey().toString())
-                        .count(entry.getValue())
-                        .build())
-                .toList();
+        return TechnologyTrendTO.builder()
+                .technologyNormalizationVersion(technologyNormalizer.version())
+                .deduplicationVersion(CrossSourceFingerprintV1.version())
+                .periodField(TECHNOLOGY_POPULARITY_PERIOD_FIELD)
+                .monthAssignment(TECHNOLOGY_TREND_MONTH_ASSIGNMENT)
+                .technologyName(canonicalTechnologyName)
+                .categoryName(scope.categoryName())
+                .sources(scope.sources())
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .rawOfferCount(calculation.rawOfferCount())
+                .uniqueOfferCount(calculation.uniqueOfferCount())
+                .eligibleOfferCount(calculation.eligibleOfferCount())
+                .points(calculation.points().stream()
+                        .map(point -> TechnologyTrendPointTO.builder()
+                                .month(point.month().toString())
+                                .count(point.count())
+                                .denominator(point.denominator())
+                                .sharePercentage(calculateSharePercentage(
+                                        point.count(), point.denominator()
+                                ))
+                                .build())
+                        .toList())
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -269,10 +292,6 @@ public class AnalyticsService {
                 .build();
     }
 
-    private LocalDateTime getPublicationDate(OfferResponseTO offer) {
-        return Objects.nonNull(offer.getPublishedAt()) ? offer.getPublishedAt() : offer.getCreatedAt();
-    }
-
     private List<TechnologyPopularityItemTO> toTechnologyPopularityItems(
             TechnologyPopularityCalculation calculation
     ) {
@@ -297,19 +316,31 @@ public class AnalyticsService {
             LocalDateTime dateTo
     ) {
         validateDateRange(dateFrom, dateTo);
+        TechnologyOfferScope scope = loadTechnologyOffers(
+                categoryName, sources, dateFrom, dateTo
+        );
+        return new TechnologyPopularityAnalysis(
+                scope.categoryName(),
+                scope.sources(),
+                technologyPopularityCalculator.calculate(scope.offers())
+        );
+    }
+
+    private TechnologyOfferScope loadTechnologyOffers(
+            String categoryName,
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
         String normalizedCategoryName = hasText(categoryName) ? categoryName.trim() : null;
         List<String> normalizedSources = normalizeSources(sources);
-        List<OfferEntity> offers = offerPersistenceService.findForTechnologyPopularity(
+        List<OfferEntity> offers = offerPersistenceService.findForTechnologyAnalytics(
                 normalizedCategoryName, normalizedSources, dateFrom, dateTo
         );
         List<String> responseSources = normalizedSources.isEmpty()
                 ? sourcesPresentIn(offers)
                 : normalizedSources;
-        return new TechnologyPopularityAnalysis(
-                normalizedCategoryName,
-                responseSources,
-                technologyPopularityCalculator.calculate(offers)
-        );
+        return new TechnologyOfferScope(normalizedCategoryName, responseSources, offers);
     }
 
     private List<TechnologyPopularityItemTO> page(
@@ -376,6 +407,16 @@ public class AnalyticsService {
         }
     }
 
+    private void validateTechnologyTrendRange(YearMonth monthFrom, YearMonth monthTo) {
+        long requestedMonths = ChronoUnit.MONTHS.between(monthFrom, monthTo) + 1;
+        if (requestedMonths > MAX_TECHNOLOGY_TREND_MONTHS) {
+            throw new ValidationException(
+                    "Technology trend range must not exceed "
+                            + MAX_TECHNOLOGY_TREND_MONTHS + " months"
+            );
+        }
+    }
+
     private DeduplicationAuditOfferTO toDeduplicationAuditOffer(
             DeduplicationAuditOfferProjection offer
     ) {
@@ -390,6 +431,13 @@ public class AnalyticsService {
             String categoryName,
             List<String> sources,
             TechnologyPopularityCalculation calculation
+    ) {
+    }
+
+    private record TechnologyOfferScope(
+            String categoryName,
+            List<String> sources,
+            List<OfferEntity> offers
     ) {
     }
 
