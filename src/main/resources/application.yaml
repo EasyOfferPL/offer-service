@@ -52,4 +52,4 @@ dataset:
   export:
     enabled: ${DATASET_EXPORT_ENABLED:false}
     directory: ${DATASET_EXPORT_DIRECTORY:./data/datasets}
-    api-key: ${DATASET_EXPORT_API_KEY:RYCdu1X9y7X5ue2q13hPJHP6pWDoaKBB}
+    api-key: ${DATASET_EXPORT_API_KEY:}
