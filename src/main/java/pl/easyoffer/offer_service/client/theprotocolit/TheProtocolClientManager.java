@@ -16,19 +16,26 @@ public class TheProtocolClientManager {
             "--disable-dev-shm-usage"
     );
 
-    private final Playwright playwright;
-    private final Browser browser;
-
-    public TheProtocolClientManager() {
-        this.playwright = Playwright.create();
-        this.browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions()
-                        .setHeadless(true)
-                        .setArgs(ADDITIONAL_ARGUMENTS)
-        );
+    public TheProtocolBrowserSession openSession() {
+        Playwright playwright = Playwright.create();
+        try {
+            Browser browser = playwright.chromium().launch(
+                    new BrowserType.LaunchOptions()
+                            .setHeadless(true)
+                            .setArgs(ADDITIONAL_ARGUMENTS)
+            );
+            return new TheProtocolBrowserSession(playwright, browser);
+        } catch (RuntimeException exception) {
+            closeAfterFailedLaunch(playwright, exception);
+            throw exception;
+        }
     }
 
-    public Browser newBrowser() {
-        return browser;
+    private void closeAfterFailedLaunch(Playwright playwright, RuntimeException launchException) {
+        try {
+            playwright.close();
+        } catch (RuntimeException closeException) {
+            launchException.addSuppressed(closeException);
+        }
     }
 }

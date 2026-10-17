@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.WaitUntilState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
+import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolBrowserSession;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClient;
 import pl.easyoffer.offer_service.client.theprotocolit.TheProtocolClientManager;
 import pl.easyoffer.offer_service.model.to.theprotocolit.TheProtocolOffer;
@@ -68,14 +70,39 @@ public class TheProtocolClientImpl implements TheProtocolClient {
         """;
 
     private static final String EMPTY_JSON_RESULT = "{}";
-
     private final TheProtocolClientManager theProtocolClientManager;
     private final ObjectMapper objectMapper;
 
     @Override
     public List<TheProtocolOffer> getAllOffers(List<String> categories) {
-        try (Browser browser = theProtocolClientManager.newBrowser();
-             BrowserContext context = createContext(browser)) {
+        try {
+            return getAllOffersWithBrowserRetry(categories);
+        } catch (Exception exception) {
+            log.error("Failed to fetch offers from TheProtocol.it", exception);
+            throw new IllegalStateException(
+                    "Could not synchronize TheProtocol.it offers",
+                    exception
+            );
+        }
+    }
+
+    private List<TheProtocolOffer> getAllOffersWithBrowserRetry(List<String> categories)
+            throws JsonProcessingException {
+        try {
+            return getAllOffersInNewSession(categories);
+        } catch (PlaywrightException exception) {
+            log.warn(
+                    "TheProtocol.it browser session failed; retrying once with a fresh session (cause={})",
+                    exception.toString()
+            );
+            return getAllOffersInNewSession(categories);
+        }
+    }
+
+    private List<TheProtocolOffer> getAllOffersInNewSession(List<String> categories)
+            throws JsonProcessingException {
+        try (TheProtocolBrowserSession session = theProtocolClientManager.openSession();
+             BrowserContext context = createContext(session.browser())) {
             Page page = context.newPage();
             openOffersPage(page);
             String xsrfToken = extractXsrfToken(context);
@@ -84,9 +111,6 @@ public class TheProtocolClientImpl implements TheProtocolClient {
                 theProtocolOffers.addAll(retrieveCategoryOffers(category, page, xsrfToken));
             }
             return theProtocolOffers;
-        } catch (Exception e) {
-            log.error("Failed to fetch offers from TheProtocol.it", e);
-            throw new IllegalStateException("Could not synchronize TheProtocol.it offers", e);
         }
     }
 
@@ -127,8 +151,13 @@ public class TheProtocolClientImpl implements TheProtocolClient {
             String response = performRequest(browserPage, apiUrl, fetchScript, xsrfToken);
             offerData = objectMapper.readValue(response, TheProtocolOfferData.class);
             offers.addAll(offerData.getOffers());
+            log.info(
+                    "Fetched {} offers for {} category on page {}",
+                    offerData.getOffers().size(),
+                    category,
+                    pageNumber
+            );
             pageNumber++;
-            log.info("Response for {} category: {}", category, response);
         } while (offerData.getOffers().size() == pageSize);
         return offers;
     }
@@ -141,6 +170,8 @@ public class TheProtocolClientImpl implements TheProtocolClient {
         String response;
         try {
             response = browserPage.evaluate(fetchScript, requestArguments).toString();
+        } catch (PlaywrightException exception) {
+            throw exception;
         } catch (Exception e) {
             log.error("Failed to perform request to TheProtocol.it", e);
             return EMPTY_JSON_RESULT;
