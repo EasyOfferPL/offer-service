@@ -17,6 +17,7 @@ import pl.easyoffer.offer_service.service.calculator.*;
 import pl.easyoffer.offer_service.service.deduplication.CrossSourceFingerprintV1;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
+import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizationResult;
 import pl.easyoffer.offer_service.service.normalization.TechnologyNormalizer;
 import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
@@ -193,7 +194,7 @@ public class AnalyticsService {
         YearMonth monthTo = YearMonth.from(dateTo);
         validateTechnologyTrendRange(monthFrom, monthTo);
         String canonicalTechnologyName = technologyNormalizer.normalize(technologyName)
-                .map(result -> result.canonicalName())
+                .map(TechnologyNormalizationResult::canonicalName)
                 .orElseThrow(() -> new ValidationException("technologyName must not be blank"));
         TechnologyOfferScope scope = loadTechnologyOffers(
                 categoryName, sources, dateFrom, dateTo
@@ -236,6 +237,11 @@ public class AnalyticsService {
         List<OfferEntity> offers = offerPersistenceService.findForSalaryAnalytics(categoryName, experienceLevel);
 
         return SalaryAnalyticsTO.builder()
+                .salaryNormalizationVersion(salaryAnalyticsCalculator.normalizationVersion())
+                .quantileMethod(salaryAnalyticsCalculator.quantileMethod())
+                .recommendedMinimumSampleSize(
+                        salaryAnalyticsCalculator.recommendedMinimumSampleSize()
+                )
                 .byCategory(salaryAnalyticsCalculator.calculateByCategory(offers))
                 .byExperienceLevel(salaryAnalyticsCalculator.calculateByExperienceLevel(offers))
                 .build();

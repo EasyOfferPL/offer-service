@@ -65,6 +65,32 @@ class SalaryComparabilityIntegrationTest {
                 .andExpect(jsonPath("$.exclusionCounts.UNKNOWN_SALARY_TYPE").value(1));
     }
 
+    @Test
+    void shouldExposeSalaryDistributionContract() throws Exception {
+        saveAnalyticsSalary("10000");
+        saveAnalyticsSalary("20000");
+        saveAnalyticsSalary("30000");
+        saveAnalyticsSalary("40000");
+
+        mockMvc.perform(get("/v1.0/analytics/salaries")
+                        .param("categoryName", "JAVA")
+                        .param("experienceLevel", "SENIOR"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.salaryNormalizationVersion").value("v1"))
+                .andExpect(jsonPath("$.quantileMethod").value("R7_LINEAR_INTERPOLATION"))
+                .andExpect(jsonPath("$.recommendedMinimumSampleSize").value(30))
+                .andExpect(jsonPath("$.byCategory.length()").value(1))
+                .andExpect(jsonPath("$.byCategory[0].minimumSalary").value(10000.00))
+                .andExpect(jsonPath("$.byCategory[0].percentile25Salary").value(17500.00))
+                .andExpect(jsonPath("$.byCategory[0].averageSalary").value(25000.00))
+                .andExpect(jsonPath("$.byCategory[0].medianSalary").value(25000.00))
+                .andExpect(jsonPath("$.byCategory[0].percentile75Salary").value(32500.00))
+                .andExpect(jsonPath("$.byCategory[0].maximumSalary").value(40000.00))
+                .andExpect(jsonPath("$.byCategory[0].offersCount").value(4))
+                .andExpect(jsonPath("$.byCategory[0].meetsRecommendedSampleSize").value(false))
+                .andExpect(jsonPath("$.byExperienceLevel[0].groupValue").value("SENIOR"));
+    }
+
     private void save(
             String minimum,
             String maximum,
@@ -84,6 +110,23 @@ class SalaryComparabilityIntegrationTest {
         offer.setSalaryUnit(salaryUnit);
         offer.setEmploymentType(employmentType);
         offer.setSalaryType(salaryType);
+        offerRepository.saveAndFlush(offer);
+    }
+
+    private void saveAnalyticsSalary(String salary) {
+        int sequence = offerSequence.incrementAndGet();
+        OfferEntity offer = new OfferEntity();
+        offer.setExternalId("salary-distribution-" + sequence);
+        offer.setTitle("Salary distribution offer " + sequence);
+        offer.setCompanyName("Company");
+        offer.setCategory("JAVA");
+        offer.setExperienceLevel("SENIOR");
+        offer.setSalaryMin(decimal(salary));
+        offer.setSalaryMax(decimal(salary));
+        offer.setCurrency("PLN");
+        offer.setSalaryUnit("MONTH");
+        offer.setEmploymentType("B2B");
+        offer.setSalaryType(SalaryType.GROSS);
         offerRepository.saveAndFlush(offer);
     }
 

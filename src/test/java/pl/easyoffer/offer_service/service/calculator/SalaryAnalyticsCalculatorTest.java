@@ -10,6 +10,7 @@ import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolic
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -84,6 +85,48 @@ class SalaryAnalyticsCalculatorTest {
         assertThat(statistic.getAverageSalary()).isEqualByComparingTo("12000.00");
         assertThat(statistic.getMedianSalary()).isEqualByComparingTo("12000.00");
         assertThat(statistic.getOffersCount()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldCalculateR7QuartilesRangeAndSampleSize() {
+        // given
+        List<OfferEntity> offers = List.of(
+                offer("Backend", "Senior", "10000", null, "PLN", "month", "b2b"),
+                offer("Backend", "Senior", "20000", null, "PLN", "month", "b2b"),
+                offer("Backend", "Senior", "30000", null, "PLN", "month", "b2b"),
+                offer("Backend", "Senior", "40000", null, "PLN", "month", "b2b")
+        );
+
+        // when
+        SalaryStatisticTO statistic = calculator.calculateByExperienceLevel(offers).getFirst();
+
+        // then
+        assertThat(statistic.getMinimumSalary()).isEqualByComparingTo("10000.00");
+        assertThat(statistic.getPercentile25Salary()).isEqualByComparingTo("17500.00");
+        assertThat(statistic.getAverageSalary()).isEqualByComparingTo("25000.00");
+        assertThat(statistic.getMedianSalary()).isEqualByComparingTo("25000.00");
+        assertThat(statistic.getPercentile75Salary()).isEqualByComparingTo("32500.00");
+        assertThat(statistic.getMaximumSalary()).isEqualByComparingTo("40000.00");
+        assertThat(statistic.getOffersCount()).isEqualTo(4);
+        assertThat(statistic.isMeetsRecommendedSampleSize()).isFalse();
+    }
+
+    @Test
+    void shouldMarkGroupAtRecommendedSampleSizeAsSufficient() {
+        // given
+        List<OfferEntity> offers = IntStream.range(0, 30)
+                .mapToObj(index -> offer(
+                        "Backend", "Senior", String.valueOf(10000 + index), null,
+                        "PLN", "month", "b2b"
+                ))
+                .toList();
+
+        // when
+        SalaryStatisticTO statistic = calculator.calculateByExperienceLevel(offers).getFirst();
+
+        // then
+        assertThat(statistic.getOffersCount()).isEqualTo(30);
+        assertThat(statistic.isMeetsRecommendedSampleSize()).isTrue();
     }
 
     @Test

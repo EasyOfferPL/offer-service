@@ -72,12 +72,21 @@ class AnalyticsServiceTest {
         ));
 
         // when
-        SalaryStatisticTO result = analyticsService.getSalaryAnalytics(null, null).getByCategory().getFirst();
+        SalaryAnalyticsTO analytics = analyticsService.getSalaryAnalytics(null, null);
+        SalaryStatisticTO result = analytics.getByCategory().getFirst();
 
         // then
+        assertThat(analytics.getSalaryNormalizationVersion()).isEqualTo("v1");
+        assertThat(analytics.getQuantileMethod()).isEqualTo("R7_LINEAR_INTERPOLATION");
+        assertThat(analytics.getRecommendedMinimumSampleSize()).isEqualTo(30);
+        assertThat(result.getMinimumSalary()).isEqualByComparingTo("12000.00");
+        assertThat(result.getPercentile25Salary()).isEqualByComparingTo("14000.00");
         assertThat(result.getAverageSalary()).isEqualByComparingTo("16000.00");
         assertThat(result.getMedianSalary()).isEqualByComparingTo("16000.00");
+        assertThat(result.getPercentile75Salary()).isEqualByComparingTo("18000.00");
+        assertThat(result.getMaximumSalary()).isEqualByComparingTo("20000.00");
         assertThat(result.getOffersCount()).isEqualTo(3);
+        assertThat(result.isMeetsRecommendedSampleSize()).isFalse();
     }
 
     @Test

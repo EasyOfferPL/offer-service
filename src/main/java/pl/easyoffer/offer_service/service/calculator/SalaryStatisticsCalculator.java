@@ -72,9 +72,16 @@ final class SalaryStatisticsCalculator {
                 .salaryUnit(SalaryComparabilityPolicy.COMPARABLE_SALARY_UNIT)
                 .employmentType(group.employmentType())
                 .salaryType(group.salaryType())
+                .minimumSalary(summary.minimumSalary())
+                .percentile25Salary(summary.percentile25Salary())
                 .averageSalary(summary.averageSalary())
                 .medianSalary(summary.medianSalary())
+                .percentile75Salary(summary.percentile75Salary())
+                .maximumSalary(summary.maximumSalary())
                 .offersCount(summary.offersCount())
+                .meetsRecommendedSampleSize(
+                        summary.offersCount() >= SalarySummary.RECOMMENDED_MINIMUM_SAMPLE_SIZE
+                )
                 .build();
     }
 

@@ -15,8 +15,13 @@ public class SalaryStatisticTO {
     private String salaryUnit;
     private String employmentType;
     private SalaryType salaryType;
+    private BigDecimal minimumSalary;
+    private BigDecimal percentile25Salary;
     private BigDecimal averageSalary;
     private BigDecimal medianSalary;
+    private BigDecimal percentile75Salary;
+    private BigDecimal maximumSalary;
     private long offersCount;
+    private boolean meetsRecommendedSampleSize;
 
 }

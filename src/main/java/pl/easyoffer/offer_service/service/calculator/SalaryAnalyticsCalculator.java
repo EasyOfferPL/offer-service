@@ -16,6 +16,18 @@ public class SalaryAnalyticsCalculator {
 
     private final SalaryComparabilityPolicy comparabilityPolicy;
 
+    public String normalizationVersion() {
+        return comparabilityPolicy.version();
+    }
+
+    public String quantileMethod() {
+        return SalarySummary.QUANTILE_METHOD;
+    }
+
+    public int recommendedMinimumSampleSize() {
+        return SalarySummary.RECOMMENDED_MINIMUM_SAMPLE_SIZE;
+    }
+
     public List<SalaryStatisticTO> calculateByCategory(List<OfferEntity> offers) {
         return SalaryStatisticsCalculator.calculate(
                 offers, OfferEntity::getCategory, comparabilityPolicy

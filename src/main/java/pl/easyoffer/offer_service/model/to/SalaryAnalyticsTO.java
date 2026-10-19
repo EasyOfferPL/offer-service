@@ -9,6 +9,9 @@ import java.util.List;
 @Builder
 public class SalaryAnalyticsTO {
 
+    private String salaryNormalizationVersion;
+    private String quantileMethod;
+    private int recommendedMinimumSampleSize;
     private List<SalaryStatisticTO> byCategory;
     private List<SalaryStatisticTO> byExperienceLevel;
 
