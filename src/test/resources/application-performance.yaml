@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: ${PERFORMANCE_DB_URL:jdbc:postgresql://127.0.0.1:5434/offerdb_performance}
+    username: ${PERFORMANCE_DB_USERNAME:offer_performance}
+    password: ${PERFORMANCE_DB_PASSWORD:offer_performance}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+    validate-on-migrate: true
+
+scheduler:
+  offer-synchronization:
+    cron: "-"
+
+feature:
+  just-join-it-synchronizer-enabled: false
+  the-protocol-it-synchronizer-enabled: false
+  nofluffjobs-synchronizer-enabled: false
+
+dataset:
+  export:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    pl.easyoffer.offer_service: WARN

@@ -77,3 +77,20 @@ range also serialize `dateFrom` and `dateTo` as `YYYY-MM-DD`:
 - `GET /v1.0/analytics/technologies/trend`
 - `GET /v1.0/analytics/salaries/trend`
 - `GET /v1.0/analytics/data-completeness`
+
+## Bounded performance experiment
+
+F-016 is implemented as an opt-in synthetic experiment against a dedicated,
+disposable PostgreSQL database. It measures synchronization-path persistence
+throughput and HTTP latency for representative paged and analytics responses at
+bounded dataset sizes. It is excluded from the ordinary test suite and never
+uses the development or research database.
+
+Run it with:
+
+```powershell
+.\scripts\run-f016-performance.ps1
+```
+
+See `performance/README.md` for the workload, safety guards, Linux command and
+report semantics.
