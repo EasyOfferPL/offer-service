@@ -60,8 +60,8 @@ class TechnologyPopularityIntegrationTest {
                 PERIOD_START.minusDays(1), "Java");
 
         mockMvc.perform(get("/v1.0/analytics/technologies/popularity")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.technologyNormalizationVersion").value("v1"))
                 .andExpect(jsonPath("$.deduplicationVersion").value("v1"))
@@ -69,8 +69,8 @@ class TechnologyPopularityIntegrationTest {
                 .andExpect(jsonPath("$.categoryName").doesNotExist())
                 .andExpect(jsonPath("$.sources[0]").value("JUST_JOIN_IT"))
                 .andExpect(jsonPath("$.sources[1]").value("THE_PROTOCOL_IT"))
-                .andExpect(jsonPath("$.dateFrom").value("2026-10-01T00:00:00"))
-                .andExpect(jsonPath("$.dateTo").value(PERIOD_END.toString()))
+                .andExpect(jsonPath("$.dateFrom").value("2026-10-01"))
+                .andExpect(jsonPath("$.dateTo").value("2026-10-31"))
                 .andExpect(jsonPath("$.rawOfferCount").value(4))
                 .andExpect(jsonPath("$.uniqueOfferCount").value(3))
                 .andExpect(jsonPath("$.eligibleOfferCount").value(2))
@@ -99,8 +99,8 @@ class TechnologyPopularityIntegrationTest {
         mockMvc.perform(get("/v1.0/analytics/technologies/popularity")
                         .param("categoryName", "BACKEND")
                         .param("sources", "just_join_it")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.categoryName").value("BACKEND"))
                 .andExpect(jsonPath("$.sources[0]").value("JUST_JOIN_IT"))
@@ -114,8 +114,8 @@ class TechnologyPopularityIntegrationTest {
                 PERIOD_START.plusDays(1), "Java", "Python", "React");
 
         mockMvc.perform(get("/v1.0/analytics/technologies/popularity")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString())
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString())
                         .param("page", "1")
                         .param("size", "2"))
                 .andExpect(status().isOk())
@@ -135,8 +135,8 @@ class TechnologyPopularityIntegrationTest {
                 PERIOD_START.plusDays(1), "Java");
 
         mockMvc.perform(get("/v1.0/analytics/technologies")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].technologyName").value("Java"))
                 .andExpect(jsonPath("$[0].count").value(1));
@@ -145,16 +145,16 @@ class TechnologyPopularityIntegrationTest {
     @Test
     void shouldRejectInvertedDateRange() throws Exception {
         mockMvc.perform(get("/v1.0/analytics/technologies/popularity")
-                        .param("dateFrom", PERIOD_END.toString())
-                        .param("dateTo", PERIOD_START.toString()))
+                        .param("dateFrom", PERIOD_END.toLocalDate().toString())
+                        .param("dateTo", PERIOD_START.toLocalDate().toString()))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldRejectTechnologyPageLargerThanLimit() throws Exception {
         mockMvc.perform(get("/v1.0/analytics/technologies/popularity")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString())
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString())
                         .param("size", "501"))
                 .andExpect(status().isBadRequest());
     }

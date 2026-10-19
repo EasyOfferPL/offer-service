@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,6 +62,16 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .toList();
         return buildResponse(HttpStatus.BAD_REQUEST, "Request validation failed", details);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        String message = exception.getRequiredType() == java.time.LocalDate.class
+                ? "Request parameter '" + exception.getName() + "' must use format YYYY-MM-DD"
+                : "Request parameter '" + exception.getName() + "' has an invalid value";
+        return buildResponse(HttpStatus.BAD_REQUEST, message, List.of());
     }
 
     @ExceptionHandler(Exception.class)

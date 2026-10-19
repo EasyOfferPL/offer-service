@@ -25,6 +25,7 @@ import pl.easyoffer.offer_service.service.persistence.OfferPersistenceService;
 import pl.easyoffer.offer_service.service.persistence.TechnologyPersistenceService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -223,8 +224,9 @@ class AnalyticsServiceTest {
     @Test
     void shouldNormalizeSalariesAndBuildContinuousMonthlyTrend() {
         // given
-        LocalDateTime dateFrom = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime dateTo = LocalDateTime.of(2026, 3, 31, 23, 59);
+        LocalDate dateFrom = LocalDate.of(2026, 1, 1);
+        LocalDate dateTo = LocalDate.of(2026, 3, 31);
+        AnalyticsDateRange dateRange = AnalyticsDateRange.inclusive(dateFrom, dateTo);
         List<OfferEntity> offers = List.of(
                 datedOffer("HOUR", "100", LocalDateTime.of(2026, 1, 5, 12, 0)),
                 datedOffer("DAY", "800", LocalDateTime.of(2026, 1, 10, 12, 0)),
@@ -232,12 +234,13 @@ class AnalyticsServiceTest {
                 datedOffer("YEAR", "201600", LocalDateTime.of(2026, 1, 20, 12, 0))
         );
         when(offerPersistenceService.findForSalaryTrend(
-                "Java", "PLN", "B2B", SalaryType.GROSS, "Senior", dateFrom, dateTo
+                "Java", "PLN", "B2B", SalaryType.GROSS, "Senior",
+                dateRange.startInclusive(), dateRange.endExclusive()
         )).thenReturn(offers);
 
         // when
         SalaryTrendTO result = analyticsService.getSalaryTrend(
-                "Java", "PLN", "b2b", SalaryType.GROSS, "Senior", dateFrom, dateTo
+                "Java", "PLN", "b2b", SalaryType.GROSS, "Senior", dateRange
         );
 
         // then
@@ -257,13 +260,11 @@ class AnalyticsServiceTest {
     @Test
     void shouldRejectInvalidSalaryTrendDateRange() {
         // given
-        LocalDateTime dateFrom = LocalDateTime.of(2026, 2, 1, 0, 0);
-        LocalDateTime dateTo = LocalDateTime.of(2026, 1, 1, 0, 0);
+        LocalDate dateFrom = LocalDate.of(2026, 2, 1);
+        LocalDate dateTo = LocalDate.of(2026, 1, 1);
 
         // when
-        ThrowingCallable action = () -> analyticsService.getSalaryTrend(
-                "Java", "PLN", "b2b", SalaryType.GROSS, null, dateFrom, dateTo
-        );
+        ThrowingCallable action = () -> AnalyticsDateRange.inclusive(dateFrom, dateTo);
 
         // then
         assertThatThrownBy(action).isInstanceOf(ValidationException.class);

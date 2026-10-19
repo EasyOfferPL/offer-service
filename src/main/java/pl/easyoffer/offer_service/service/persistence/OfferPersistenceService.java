@@ -96,13 +96,17 @@ public class OfferPersistenceService {
     public List<OfferEntity> findForTechnologyAnalytics(
             String categoryName,
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            LocalDateTime dateFromInclusive,
+            LocalDateTime dateToExclusive
     ) {
         if (sources.isEmpty()) {
-            return offerRepository.findForTechnologyAnalytics(categoryName, dateFrom, dateTo);
+            return offerRepository.findForTechnologyAnalytics(
+                    categoryName, dateFromInclusive, dateToExclusive
+            );
         }
-        return offerRepository.findForTechnologyAnalytics(categoryName, sources, dateFrom, dateTo);
+        return offerRepository.findForTechnologyAnalytics(
+                categoryName, sources, dateFromInclusive, dateToExclusive
+        );
     }
 
     public Stream<SalaryComparabilityInput> streamSalaryComparabilityInputs() {
@@ -112,12 +116,16 @@ public class OfferPersistenceService {
 
     public Stream<DataCompletenessInput> streamDataCompletenessInputs(
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            LocalDateTime dateFromInclusive,
+            LocalDateTime dateToExclusive
     ) {
         Stream<DataCompletenessInputProjection> projections = sources.isEmpty()
-                ? offerRepository.streamDataCompletenessInputs(dateFrom, dateTo)
-                : offerRepository.streamDataCompletenessInputs(sources, dateFrom, dateTo);
+                ? offerRepository.streamDataCompletenessInputs(
+                        dateFromInclusive, dateToExclusive
+                )
+                : offerRepository.streamDataCompletenessInputs(
+                        sources, dateFromInclusive, dateToExclusive
+                );
         return projections.map(OfferPersistenceService::toDataCompletenessInput);
     }
 
@@ -127,12 +135,12 @@ public class OfferPersistenceService {
             String employmentType,
             SalaryType salaryType,
             String experienceLevel,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            LocalDateTime dateFromInclusive,
+            LocalDateTime dateToExclusive
     ) {
         return offerRepository.findForSalaryTrend(
                 categoryName, currency, employmentType, salaryType,
-                experienceLevel, dateFrom, dateTo
+                experienceLevel, dateFromInclusive, dateToExclusive
         );
     }
 

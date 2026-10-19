@@ -15,6 +15,7 @@ import pl.easyoffer.offer_service.repository.OfferRepository;
 import pl.easyoffer.offer_service.repository.TechnologyRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -27,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class DataCompletenessIntegrationTest {
 
-    private static final LocalDateTime DATE_FROM = LocalDateTime.of(2000, 1, 1, 0, 0);
-    private static final LocalDateTime DATE_TO = LocalDateTime.of(2100, 1, 1, 0, 0);
+    private static final LocalDate DATE_FROM = LocalDate.of(2000, 1, 1);
+    private static final LocalDate DATE_TO = LocalDate.of(2100, 1, 1);
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,8 +61,8 @@ class DataCompletenessIntegrationTest {
                 .andExpect(jsonPath("$.salaryNormalizationVersion").value("v1"))
                 .andExpect(jsonPath("$.periodField").value("CREATED_AT"))
                 .andExpect(jsonPath("$.unitOfAnalysis").value("SOURCE_OFFER_ROW"))
-                .andExpect(jsonPath("$.dateFrom").value("2000-01-01T00:00:00"))
-                .andExpect(jsonPath("$.dateTo").value("2100-01-01T00:00:00"))
+                .andExpect(jsonPath("$.dateFrom").value("2000-01-01"))
+                .andExpect(jsonPath("$.dateTo").value("2100-01-01"))
                 .andExpect(jsonPath("$.sources[0]").value("JUST_JOIN_IT"))
                 .andExpect(jsonPath("$.sources[1]").value("THE_PROTOCOL_IT"))
                 .andExpect(jsonPath("$.eligibleOfferCount").value(3))

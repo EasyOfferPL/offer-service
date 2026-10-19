@@ -61,8 +61,8 @@ class TechnologyTrendIntegrationTest {
 
         mockMvc.perform(get("/v1.0/analytics/technologies/trend")
                         .param("technologyName", "java")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.technologyNormalizationVersion").value("v1"))
                 .andExpect(jsonPath("$.deduplicationVersion").value("v1"))
@@ -100,8 +100,8 @@ class TechnologyTrendIntegrationTest {
                         .param("technologyName", "Java")
                         .param("categoryName", "BACKEND")
                         .param("sources", "just_join_it")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.categoryName").value("BACKEND"))
                 .andExpect(jsonPath("$.sources[0]").value("JUST_JOIN_IT"))
@@ -114,14 +114,14 @@ class TechnologyTrendIntegrationTest {
     void shouldRejectBlankTechnologyAndInvertedDateRange() throws Exception {
         mockMvc.perform(get("/v1.0/analytics/technologies/trend")
                         .param("technologyName", " ")
-                        .param("dateFrom", PERIOD_START.toString())
-                        .param("dateTo", PERIOD_END.toString()))
+                        .param("dateFrom", PERIOD_START.toLocalDate().toString())
+                        .param("dateTo", PERIOD_END.toLocalDate().toString()))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get("/v1.0/analytics/technologies/trend")
                         .param("technologyName", "Java")
-                        .param("dateFrom", PERIOD_END.toString())
-                        .param("dateTo", PERIOD_START.toString()))
+                        .param("dateFrom", PERIOD_END.toLocalDate().toString())
+                        .param("dateTo", PERIOD_START.toLocalDate().toString()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -129,8 +129,8 @@ class TechnologyTrendIntegrationTest {
     void shouldRejectTrendRangeLargerThanLimit() throws Exception {
         mockMvc.perform(get("/v1.0/analytics/technologies/trend")
                         .param("technologyName", "Java")
-                        .param("dateFrom", "2016-01-01T00:00:00")
-                        .param("dateTo", "2026-01-31T23:59:59"))
+                        .param("dateFrom", "2016-01-01")
+                        .param("dateTo", "2026-01-31"))
                 .andExpect(status().isBadRequest());
     }
 

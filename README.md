@@ -58,3 +58,22 @@ and `manifest.sha256`. The manifest records row counts, per-file SHA-256 hashes,
 the overall dataset fingerprint, source counts, collection window, Flyway schema
 version, normalization versions and code revision. Synchronization error message
 contents are intentionally excluded from the export.
+
+## Analytics date ranges
+
+Analytics endpoints with `dateFrom` and `dateTo` request parameters accept
+calendar dates in `YYYY-MM-DD` format. Both dates are inclusive. Internally the
+application queries a half-open timestamp interval from the start of `dateFrom`
+up to, but excluding, the start of the day after `dateTo`; no time-zone
+conversion is applied.
+
+This is a breaking replacement for the previous timestamp request format.
+Values such as `2026-10-01T00:00:00` are rejected with HTTP 400. The date-only
+contract applies to the following endpoints. Responses that expose the selected
+range also serialize `dateFrom` and `dateTo` as `YYYY-MM-DD`:
+
+- `GET /v1.0/analytics/technologies`
+- `GET /v1.0/analytics/technologies/popularity`
+- `GET /v1.0/analytics/technologies/trend`
+- `GET /v1.0/analytics/salaries/trend`
+- `GET /v1.0/analytics/data-completeness`

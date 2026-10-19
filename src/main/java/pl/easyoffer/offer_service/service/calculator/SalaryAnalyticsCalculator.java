@@ -7,7 +7,7 @@ import pl.easyoffer.offer_service.model.to.SalaryStatisticTO;
 import pl.easyoffer.offer_service.model.to.SalaryTrendPointTO;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
@@ -42,8 +42,8 @@ public class SalaryAnalyticsCalculator {
 
     public List<SalaryTrendPointTO> calculateMonthlyTrend(
             List<OfferEntity> offers,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            LocalDate dateFrom,
+            LocalDate dateTo
     ) {
         return SalaryTrendCalculator.calculate(
                 offers, dateFrom, dateTo, comparabilityPolicy

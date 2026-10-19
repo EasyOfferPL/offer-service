@@ -8,6 +8,7 @@ import pl.easyoffer.offer_service.model.to.SalaryTrendPointTO;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -147,8 +148,8 @@ class SalaryAnalyticsCalculatorTest {
     @Test
     void shouldNormalizeSalaryUnitsAndBuildContinuousMonthlyTrend() {
         // given
-        LocalDateTime dateFrom = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime dateTo = LocalDateTime.of(2026, 3, 31, 23, 59);
+        LocalDate dateFrom = LocalDate.of(2026, 1, 1);
+        LocalDate dateTo = LocalDate.of(2026, 3, 31);
         List<OfferEntity> offers = List.of(
                 datedOffer("HOUR", "100", LocalDateTime.of(2026, 1, 5, 12, 0)),
                 datedOffer("DAY", "800", LocalDateTime.of(2026, 1, 10, 12, 0)),
@@ -186,8 +187,8 @@ class SalaryAnalyticsCalculatorTest {
         // when
         List<SalaryTrendPointTO> trend = calculator.calculateMonthlyTrend(
                 List.of(fallbackDateOffer, missingSalary, missingDate),
-                LocalDateTime.of(2026, 2, 1, 0, 0),
-                LocalDateTime.of(2026, 2, 28, 23, 59)
+                LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 2, 28)
         );
 
         // then

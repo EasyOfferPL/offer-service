@@ -3,6 +3,7 @@ package pl.easyoffer.offer_service.controller;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,9 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.to.*;
+import pl.easyoffer.offer_service.service.AnalyticsDateRange;
 import pl.easyoffer.offer_service.service.AnalyticsService;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -42,24 +44,26 @@ public class AnalyticsController {
     @GetMapping("/technologies")
     public ResponseEntity<List<TechnologiesAnalyticsTO>> getTechnologiesAnalytics(
             @RequestParam(required = false) String categoryName,
-            @RequestParam LocalDateTime dateFrom,
-            @RequestParam LocalDateTime dateTo
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
     ) {
-        return ResponseEntity.ok(analyticsService.getTechnologiesAnalytics(categoryName, dateFrom, dateTo));
+        return ResponseEntity.ok(analyticsService.getTechnologiesAnalytics(
+                categoryName, AnalyticsDateRange.inclusive(dateFrom, dateTo)
+        ));
     }
 
     @GetMapping("/technologies/popularity")
     public ResponseEntity<TechnologyPopularityTO> getTechnologyPopularity(
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) List<String> sources,
-            @RequestParam LocalDateTime dateFrom,
-            @RequestParam LocalDateTime dateTo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(defaultValue = FIRST_TECHNOLOGY_PAGE) @Min(0) int page,
             @RequestParam(defaultValue = DEFAULT_TECHNOLOGY_PAGE_SIZE)
             @Min(1) @Max(MAX_TECHNOLOGY_PAGE_SIZE) int size
     ) {
         return ResponseEntity.ok(analyticsService.getTechnologyPopularity(
-                categoryName, sources, dateFrom, dateTo, page, size
+                categoryName, sources, AnalyticsDateRange.inclusive(dateFrom, dateTo), page, size
         ));
     }
 
@@ -68,11 +72,12 @@ public class AnalyticsController {
             @RequestParam String technologyName,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) List<String> sources,
-            @RequestParam LocalDateTime dateFrom,
-            @RequestParam LocalDateTime dateTo
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getTechnologyTrend(
-                technologyName, categoryName, sources, dateFrom, dateTo
+                technologyName, categoryName, sources,
+                AnalyticsDateRange.inclusive(dateFrom, dateTo)
         ));
     }
 
@@ -106,10 +111,12 @@ public class AnalyticsController {
     @GetMapping("/data-completeness")
     public ResponseEntity<DataCompletenessTO> getDataCompleteness(
             @RequestParam(required = false) List<String> sources,
-            @RequestParam LocalDateTime dateFrom,
-            @RequestParam LocalDateTime dateTo
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
     ) {
-        return ResponseEntity.ok(analyticsService.getDataCompleteness(sources, dateFrom, dateTo));
+        return ResponseEntity.ok(analyticsService.getDataCompleteness(
+                sources, AnalyticsDateRange.inclusive(dateFrom, dateTo)
+        ));
     }
 
     @GetMapping("/salaries/trend")
@@ -119,12 +126,12 @@ public class AnalyticsController {
             @RequestParam String employmentType,
             @RequestParam(defaultValue = "GROSS") SalaryType salaryType,
             @RequestParam(required = false) String experienceLevel,
-            @RequestParam LocalDateTime dateFrom,
-            @RequestParam LocalDateTime dateTo
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
     ) {
         return ResponseEntity.ok(analyticsService.getSalaryTrend(
                 categoryName, currency, employmentType, salaryType,
-                experienceLevel, dateFrom, dateTo
+                experienceLevel, AnalyticsDateRange.inclusive(dateFrom, dateTo)
         ));
     }
 

@@ -6,6 +6,7 @@ import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityPolicy;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -20,8 +21,8 @@ final class SalaryTrendCalculator {
 
     static List<SalaryTrendPointTO> calculate(
             List<OfferEntity> offers,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo,
+            LocalDate dateFrom,
+            LocalDate dateTo,
             SalaryComparabilityPolicy comparabilityPolicy
     ) {
         Map<YearMonth, List<BigDecimal>> salariesByMonth = groupSalariesByMonth(

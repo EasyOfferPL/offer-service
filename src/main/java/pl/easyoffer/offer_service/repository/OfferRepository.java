@@ -104,13 +104,14 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             FROM OfferEntity offer
             LEFT JOIN FETCH offer.technologies
             WHERE (:categoryName IS NULL OR offer.category = :categoryName)
-              AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
+              AND offer.publishedAt >= :dateFromInclusive
+              AND offer.publishedAt < :dateToExclusive
             ORDER BY offer.id
             """)
     List<OfferEntity> findForTechnologyAnalytics(
             @Param("categoryName") String categoryName,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
+            @Param("dateFromInclusive") LocalDateTime dateFromInclusive,
+            @Param("dateToExclusive") LocalDateTime dateToExclusive
     );
 
     @Query("""
@@ -119,14 +120,15 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             LEFT JOIN FETCH offer.technologies
             WHERE (:categoryName IS NULL OR offer.category = :categoryName)
               AND offer.source IN :sources
-              AND offer.publishedAt BETWEEN :dateFrom AND :dateTo
+              AND offer.publishedAt >= :dateFromInclusive
+              AND offer.publishedAt < :dateToExclusive
             ORDER BY offer.id
             """)
     List<OfferEntity> findForTechnologyAnalytics(
             @Param("categoryName") String categoryName,
             @Param("sources") List<String> sources,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
+            @Param("dateFromInclusive") LocalDateTime dateFromInclusive,
+            @Param("dateToExclusive") LocalDateTime dateToExclusive
     );
 
     @Query("""
@@ -159,7 +161,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
                    offer.publishedAt AS publishedAt
             FROM OfferEntity offer
             LEFT JOIN offer.technologies technology
-            WHERE offer.createdAt BETWEEN :dateFrom AND :dateTo
+            WHERE offer.createdAt >= :dateFromInclusive
+              AND offer.createdAt < :dateToExclusive
             GROUP BY offer.id,
                      offer.source,
                      offer.salaryMin,
@@ -175,8 +178,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             ORDER BY offer.source, offer.id
             """)
     Stream<DataCompletenessInputProjection> streamDataCompletenessInputs(
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
+            @Param("dateFromInclusive") LocalDateTime dateFromInclusive,
+            @Param("dateToExclusive") LocalDateTime dateToExclusive
     );
 
     @QueryHints({
@@ -198,7 +201,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
                    offer.publishedAt AS publishedAt
             FROM OfferEntity offer
             LEFT JOIN offer.technologies technology
-            WHERE offer.createdAt BETWEEN :dateFrom AND :dateTo
+            WHERE offer.createdAt >= :dateFromInclusive
+              AND offer.createdAt < :dateToExclusive
               AND offer.source IN :sources
             GROUP BY offer.id,
                      offer.source,
@@ -216,8 +220,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             """)
     Stream<DataCompletenessInputProjection> streamDataCompletenessInputs(
             @Param("sources") List<String> sources,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
+            @Param("dateFromInclusive") LocalDateTime dateFromInclusive,
+            @Param("dateToExclusive") LocalDateTime dateToExclusive
     );
 
     @QueryHints({
@@ -284,7 +288,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
               AND UPPER(TRIM(oe.employmentType)) = :employmentType
               AND oe.salaryType = :salaryType
               AND (:experienceLevel IS NULL OR oe.experienceLevel = :experienceLevel)
-              AND COALESCE(oe.publishedAt, oe.createdAt) BETWEEN :dateFrom AND :dateTo
+              AND COALESCE(oe.publishedAt, oe.createdAt) >= :dateFromInclusive
+              AND COALESCE(oe.publishedAt, oe.createdAt) < :dateToExclusive
             """)
     List<OfferEntity> findForSalaryTrend(
             @Param("categoryName") String categoryName,
@@ -292,8 +297,8 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             @Param("employmentType") String employmentType,
             @Param("salaryType") SalaryType salaryType,
             @Param("experienceLevel") String experienceLevel,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo
+            @Param("dateFromInclusive") LocalDateTime dateFromInclusive,
+            @Param("dateToExclusive") LocalDateTime dateToExclusive
     );
 
 }

@@ -63,11 +63,10 @@ public class AnalyticsService {
 
     public List<TechnologiesAnalyticsTO> getTechnologiesAnalytics(
             String categoryName,
-            LocalDateTime from,
-            LocalDateTime to
+            AnalyticsDateRange dateRange
     ) {
         TechnologyPopularityAnalysis analysis = analyzeTechnologyPopularity(
-                categoryName, List.of(), from, to
+                categoryName, List.of(), dateRange
         );
         return toTechnologyPopularityItems(analysis.calculation()).stream()
                 .map(technology -> TechnologiesAnalyticsTO.builder()
@@ -81,14 +80,13 @@ public class AnalyticsService {
     public TechnologyPopularityTO getTechnologyPopularity(
             String categoryName,
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo,
+            AnalyticsDateRange dateRange,
             int page,
             int size
     ) {
         validatePagination(page, size);
         TechnologyPopularityAnalysis analysis = analyzeTechnologyPopularity(
-                categoryName, sources, dateFrom, dateTo
+                categoryName, sources, dateRange
         );
         TechnologyPopularityCalculation calculation = analysis.calculation();
         List<TechnologyPopularityItemTO> allTechnologies = toTechnologyPopularityItems(calculation);
@@ -100,8 +98,8 @@ public class AnalyticsService {
                 .periodField(TECHNOLOGY_POPULARITY_PERIOD_FIELD)
                 .categoryName(analysis.categoryName())
                 .sources(analysis.sources())
-                .dateFrom(dateFrom)
-                .dateTo(dateTo)
+                .dateFrom(dateRange.dateFrom())
+                .dateTo(dateRange.dateTo())
                 .rawOfferCount(calculation.rawOfferCount())
                 .uniqueOfferCount(calculation.uniqueOfferCount())
                 .eligibleOfferCount(calculation.eligibleOfferCount())
@@ -187,18 +185,16 @@ public class AnalyticsService {
             String technologyName,
             String categoryName,
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            AnalyticsDateRange dateRange
     ) {
-        validateDateRange(dateFrom, dateTo);
-        YearMonth monthFrom = YearMonth.from(dateFrom);
-        YearMonth monthTo = YearMonth.from(dateTo);
+        YearMonth monthFrom = YearMonth.from(dateRange.dateFrom());
+        YearMonth monthTo = YearMonth.from(dateRange.dateTo());
         validateTechnologyTrendRange(monthFrom, monthTo);
         String canonicalTechnologyName = technologyNormalizer.normalize(technologyName)
                 .map(TechnologyNormalizationResult::canonicalName)
                 .orElseThrow(() -> new ValidationException("technologyName must not be blank"));
         TechnologyOfferScope scope = loadTechnologyOffers(
-                categoryName, sources, dateFrom, dateTo
+                categoryName, sources, dateRange
         );
         TechnologyTrendCalculation calculation = technologyPopularityCalculator.calculateMonthlyTrend(
                 scope.offers(),
@@ -215,8 +211,8 @@ public class AnalyticsService {
                 .technologyName(canonicalTechnologyName)
                 .categoryName(scope.categoryName())
                 .sources(scope.sources())
-                .dateFrom(dateFrom)
-                .dateTo(dateTo)
+                .dateFrom(dateRange.dateFrom())
+                .dateTo(dateRange.dateTo())
                 .rawOfferCount(calculation.rawOfferCount())
                 .uniqueOfferCount(calculation.uniqueOfferCount())
                 .eligibleOfferCount(calculation.eligibleOfferCount())
@@ -259,14 +255,16 @@ public class AnalyticsService {
     @Transactional(readOnly = true)
     public DataCompletenessTO getDataCompleteness(
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            AnalyticsDateRange dateRange
     ) {
-        validateDateRange(dateFrom, dateTo);
         List<String> normalizedSources = normalizeSources(sources);
         DataCompletenessCalculation calculation;
         try (Stream<DataCompletenessInput> inputs = offerPersistenceService
-                .streamDataCompletenessInputs(normalizedSources, dateFrom, dateTo)) {
+                .streamDataCompletenessInputs(
+                        normalizedSources,
+                        dateRange.startInclusive(),
+                        dateRange.endExclusive()
+                )) {
             calculation = dataCompletenessCalculator.calculate(inputs);
         }
 
@@ -282,8 +280,8 @@ public class AnalyticsService {
                 .periodField(DataCompletenessCalculator.PERIOD_FIELD)
                 .unitOfAnalysis(DataCompletenessCalculator.UNIT_OF_ANALYSIS)
                 .sources(responseSources)
-                .dateFrom(dateFrom)
-                .dateTo(dateTo)
+                .dateFrom(dateRange.dateFrom())
+                .dateTo(dateRange.dateTo())
                 .eligibleOfferCount(calculation.eligibleOfferCount())
                 .bySource(calculation.bySource())
                 .build();
@@ -296,10 +294,8 @@ public class AnalyticsService {
             String employmentType,
             SalaryType salaryType,
             String experienceLevel,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            AnalyticsDateRange dateRange
     ) {
-        validateDateRange(dateFrom, dateTo);
         if (!SalaryComparabilityPolicy.COMPARABLE_CURRENCY.equalsIgnoreCase(currency)) {
             throw new ValidationException("Only PLN salaries are comparable");
         }
@@ -318,8 +314,8 @@ public class AnalyticsService {
                 normalizedEmploymentType,
                 salaryType,
                 experienceLevel,
-                dateFrom,
-                dateTo
+                dateRange.startInclusive(),
+                dateRange.endExclusive()
         );
         return SalaryTrendTO.builder()
                 .categoryName(categoryName)
@@ -328,7 +324,9 @@ public class AnalyticsService {
                 .experienceLevel(experienceLevel)
                 .salaryUnit(SalaryUnit.MONTH.name())
                 .salaryType(salaryType)
-                .points(salaryAnalyticsCalculator.calculateMonthlyTrend(offers, dateFrom, dateTo))
+                .points(salaryAnalyticsCalculator.calculateMonthlyTrend(
+                        offers, dateRange.dateFrom(), dateRange.dateTo()
+                ))
                 .build();
     }
 
@@ -352,12 +350,10 @@ public class AnalyticsService {
     private TechnologyPopularityAnalysis analyzeTechnologyPopularity(
             String categoryName,
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            AnalyticsDateRange dateRange
     ) {
-        validateDateRange(dateFrom, dateTo);
         TechnologyOfferScope scope = loadTechnologyOffers(
-                categoryName, sources, dateFrom, dateTo
+                categoryName, sources, dateRange
         );
         return new TechnologyPopularityAnalysis(
                 scope.categoryName(),
@@ -369,25 +365,21 @@ public class AnalyticsService {
     private TechnologyOfferScope loadTechnologyOffers(
             String categoryName,
             List<String> sources,
-            LocalDateTime dateFrom,
-            LocalDateTime dateTo
+            AnalyticsDateRange dateRange
     ) {
         String normalizedCategoryName = hasText(categoryName) ? categoryName.trim() : null;
         List<String> normalizedSources = normalizeSources(sources);
         List<OfferEntity> offers = offerPersistenceService.findForTechnologyAnalytics(
-                normalizedCategoryName, normalizedSources, dateFrom, dateTo
+                normalizedCategoryName,
+                normalizedSources,
+                dateRange.startInclusive(),
+                dateRange.endExclusive()
         );
-        List<String> responseSources = normalizedSources.isEmpty()
-                ? sourcesPresentIn(offers)
-                : normalizedSources;
+        List<String> responseSources = normalizedSources.isEmpty() ? sourcesPresentIn(offers) : normalizedSources;
         return new TechnologyOfferScope(normalizedCategoryName, responseSources, offers);
     }
 
-    private List<TechnologyPopularityItemTO> page(
-            List<TechnologyPopularityItemTO> technologies,
-            int page,
-            int size
-    ) {
+    private List<TechnologyPopularityItemTO> page(List<TechnologyPopularityItemTO> technologies, int page, int size) {
         long requestedOffset = (long) page * size;
         if (requestedOffset >= technologies.size()) {
             return List.of();
@@ -427,15 +419,6 @@ public class AnalyticsService {
                 .distinct()
                 .sorted()
                 .toList();
-    }
-
-    private void validateDateRange(LocalDateTime dateFrom, LocalDateTime dateTo) {
-        if (dateFrom == null || dateTo == null) {
-            throw new ValidationException("dateFrom and dateTo are required");
-        }
-        if (dateFrom.isAfter(dateTo)) {
-            throw new ValidationException("dateFrom must not be after dateTo");
-        }
     }
 
     private void validatePagination(int page, int size) {

@@ -3,7 +3,7 @@ package pl.easyoffer.offer_service.model.to;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -15,8 +15,8 @@ public class DataCompletenessTO {
     private String periodField;
     private String unitOfAnalysis;
     private List<String> sources;
-    private LocalDateTime dateFrom;
-    private LocalDateTime dateTo;
+    private LocalDate dateFrom;
+    private LocalDate dateTo;
     private long eligibleOfferCount;
     private List<DataCompletenessSourceTO> bySource;
 
