@@ -145,6 +145,86 @@ public interface OfferRepository extends JpaRepository<OfferEntity, Long>, JpaSp
             @jakarta.persistence.QueryHint(name = "org.hibernate.readOnly", value = "true")
     })
     @Query("""
+            SELECT offer.source AS source,
+                   offer.salaryMin AS salaryMin,
+                   offer.salaryMax AS salaryMax,
+                   offer.currency AS currency,
+                   offer.salaryUnit AS salaryUnit,
+                   offer.employmentType AS employmentType,
+                   offer.salaryType AS salaryType,
+                   COUNT(technology) AS technologyCount,
+                   offer.experienceLevel AS experienceLevel,
+                   offer.location AS location,
+                   offer.workMode AS workMode,
+                   offer.publishedAt AS publishedAt
+            FROM OfferEntity offer
+            LEFT JOIN offer.technologies technology
+            WHERE offer.createdAt BETWEEN :dateFrom AND :dateTo
+            GROUP BY offer.id,
+                     offer.source,
+                     offer.salaryMin,
+                     offer.salaryMax,
+                     offer.currency,
+                     offer.salaryUnit,
+                     offer.employmentType,
+                     offer.salaryType,
+                     offer.experienceLevel,
+                     offer.location,
+                     offer.workMode,
+                     offer.publishedAt
+            ORDER BY offer.source, offer.id
+            """)
+    Stream<DataCompletenessInputProjection> streamDataCompletenessInputs(
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
+    @QueryHints({
+            @jakarta.persistence.QueryHint(name = "org.hibernate.fetchSize", value = "1000"),
+            @jakarta.persistence.QueryHint(name = "org.hibernate.readOnly", value = "true")
+    })
+    @Query("""
+            SELECT offer.source AS source,
+                   offer.salaryMin AS salaryMin,
+                   offer.salaryMax AS salaryMax,
+                   offer.currency AS currency,
+                   offer.salaryUnit AS salaryUnit,
+                   offer.employmentType AS employmentType,
+                   offer.salaryType AS salaryType,
+                   COUNT(technology) AS technologyCount,
+                   offer.experienceLevel AS experienceLevel,
+                   offer.location AS location,
+                   offer.workMode AS workMode,
+                   offer.publishedAt AS publishedAt
+            FROM OfferEntity offer
+            LEFT JOIN offer.technologies technology
+            WHERE offer.createdAt BETWEEN :dateFrom AND :dateTo
+              AND offer.source IN :sources
+            GROUP BY offer.id,
+                     offer.source,
+                     offer.salaryMin,
+                     offer.salaryMax,
+                     offer.currency,
+                     offer.salaryUnit,
+                     offer.employmentType,
+                     offer.salaryType,
+                     offer.experienceLevel,
+                     offer.location,
+                     offer.workMode,
+                     offer.publishedAt
+            ORDER BY offer.source, offer.id
+            """)
+    Stream<DataCompletenessInputProjection> streamDataCompletenessInputs(
+            @Param("sources") List<String> sources,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo
+    );
+
+    @QueryHints({
+            @jakarta.persistence.QueryHint(name = "org.hibernate.fetchSize", value = "1000"),
+            @jakarta.persistence.QueryHint(name = "org.hibernate.readOnly", value = "true")
+    })
+    @Query("""
             SELECT offer.id AS id,
                    offer.externalId AS externalId,
                    offer.title AS title,

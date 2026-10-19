@@ -48,6 +48,7 @@ public class AnalyticsService {
     private final TechnologyPersistenceService technologyPersistenceService;
     private final SalaryAnalyticsCalculator salaryAnalyticsCalculator;
     private final SalaryComparabilityAuditCalculator salaryComparabilityAuditCalculator;
+    private final DataCompletenessCalculator dataCompletenessCalculator;
     private final TechnologyNormalizer technologyNormalizer;
     private final TechnologyPopularityCalculator technologyPopularityCalculator;
 
@@ -253,6 +254,39 @@ public class AnalyticsService {
                      offerPersistenceService.streamSalaryComparabilityInputs()) {
             return salaryComparabilityAuditCalculator.calculate(inputs);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public DataCompletenessTO getDataCompleteness(
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        validateDateRange(dateFrom, dateTo);
+        List<String> normalizedSources = normalizeSources(sources);
+        DataCompletenessCalculation calculation;
+        try (Stream<DataCompletenessInput> inputs = offerPersistenceService
+                .streamDataCompletenessInputs(normalizedSources, dateFrom, dateTo)) {
+            calculation = dataCompletenessCalculator.calculate(inputs);
+        }
+
+        List<String> responseSources = normalizedSources.isEmpty()
+                ? calculation.bySource().stream()
+                        .map(DataCompletenessSourceTO::getSource)
+                        .toList()
+                : normalizedSources;
+
+        return DataCompletenessTO.builder()
+                .completenessVersion(DataCompletenessCalculator.VERSION)
+                .salaryNormalizationVersion(dataCompletenessCalculator.salaryNormalizationVersion())
+                .periodField(DataCompletenessCalculator.PERIOD_FIELD)
+                .unitOfAnalysis(DataCompletenessCalculator.UNIT_OF_ANALYSIS)
+                .sources(responseSources)
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .eligibleOfferCount(calculation.eligibleOfferCount())
+                .bySource(calculation.bySource())
+                .build();
     }
 
     @Transactional(readOnly = true)

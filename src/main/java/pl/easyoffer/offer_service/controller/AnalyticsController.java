@@ -103,6 +103,15 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getSalaryComparabilityAudit());
     }
 
+    @GetMapping("/data-completeness")
+    public ResponseEntity<DataCompletenessTO> getDataCompleteness(
+            @RequestParam(required = false) List<String> sources,
+            @RequestParam LocalDateTime dateFrom,
+            @RequestParam LocalDateTime dateTo
+    ) {
+        return ResponseEntity.ok(analyticsService.getDataCompleteness(sources, dateFrom, dateTo));
+    }
+
     @GetMapping("/salaries/trend")
     public ResponseEntity<SalaryTrendTO> getSalaryTrend(
             @RequestParam String categoryName,

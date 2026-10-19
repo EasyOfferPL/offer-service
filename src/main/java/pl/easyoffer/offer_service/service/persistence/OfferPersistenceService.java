@@ -8,10 +8,8 @@ import org.springframework.stereotype.Service;
 import pl.easyoffer.offer_service.model.SalaryType;
 import pl.easyoffer.offer_service.model.entity.OfferEntity;
 import pl.easyoffer.offer_service.repository.OfferRepository;
-import pl.easyoffer.offer_service.repository.projection.CategoryProjection;
-import pl.easyoffer.offer_service.repository.projection.CategoryStatisticProjection;
-import pl.easyoffer.offer_service.repository.projection.DeduplicationAuditOfferProjection;
-import pl.easyoffer.offer_service.repository.projection.SalaryComparabilityInputProjection;
+import pl.easyoffer.offer_service.repository.projection.*;
+import pl.easyoffer.offer_service.service.calculator.DataCompletenessInput;
 import pl.easyoffer.offer_service.service.normalization.SalaryComparabilityInput;
 
 import java.time.LocalDateTime;
@@ -112,6 +110,17 @@ public class OfferPersistenceService {
                 .map(OfferPersistenceService::toSalaryComparabilityInput);
     }
 
+    public Stream<DataCompletenessInput> streamDataCompletenessInputs(
+            List<String> sources,
+            LocalDateTime dateFrom,
+            LocalDateTime dateTo
+    ) {
+        Stream<DataCompletenessInputProjection> projections = sources.isEmpty()
+                ? offerRepository.streamDataCompletenessInputs(dateFrom, dateTo)
+                : offerRepository.streamDataCompletenessInputs(sources, dateFrom, dateTo);
+        return projections.map(OfferPersistenceService::toDataCompletenessInput);
+    }
+
     public List<OfferEntity> findForSalaryTrend(
             String categoryName,
             String currency,
@@ -137,6 +146,27 @@ public class OfferPersistenceService {
                 projection.getSalaryUnit(),
                 projection.getEmploymentType(),
                 projection.getSalaryType()
+        );
+    }
+
+    private static DataCompletenessInput toDataCompletenessInput(
+            DataCompletenessInputProjection projection
+    ) {
+        return new DataCompletenessInput(
+                projection.getSource(),
+                new SalaryComparabilityInput(
+                        projection.getSalaryMin(),
+                        projection.getSalaryMax(),
+                        projection.getCurrency(),
+                        projection.getSalaryUnit(),
+                        projection.getEmploymentType(),
+                        projection.getSalaryType()
+                ),
+                projection.getTechnologyCount(),
+                projection.getExperienceLevel(),
+                projection.getLocation(),
+                projection.getWorkMode(),
+                projection.getPublishedAt()
         );
     }
 
