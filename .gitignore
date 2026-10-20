@@ -36,3 +36,4 @@ build/
 thesis
 AGENTS.md
 .agents
+docs/frontend-api.md

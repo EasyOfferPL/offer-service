@@ -12,6 +12,11 @@
 
 [EO-7] Implement POC of statistics api
 
+## API contract
+
+The running application publishes its versioned OpenAPI contract at
+`/v3/api-docs` and interactive Swagger UI at `/swagger-ui.html`.
+
 ## Local database
 
 The application uses PostgreSQL and applies versioned Flyway migrations during startup.
