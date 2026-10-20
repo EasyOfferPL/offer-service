@@ -17,6 +17,11 @@
 The running application publishes its versioned OpenAPI contract at
 `/v3/api-docs` and interactive Swagger UI at `/swagger-ui.html`.
 
+To run the backend and an isolated PostgreSQL database for local frontend
+development, use `compose.backend-local.yaml`. The frontend itself runs
+separately. See [`docs/backend-local-setup.md`](docs/backend-local-setup.md) for
+startup, browser proxy and local demo-data instructions.
+
 ## Local database
 
 The application uses PostgreSQL and applies versioned Flyway migrations during startup.

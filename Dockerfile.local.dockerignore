@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+.agents
+data
+docs
+performance
+target
+thesis
+*.iml

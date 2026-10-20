@@ -1,0 +1,41 @@
+name: easyoffer-backend-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: offerdb
+      POSTGRES_USER: offer_user
+      POSTGRES_PASSWORD: offer_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U offer_user -d offerdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - backend-local-postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    image: easyoffer/offer-service:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/offerdb
+      SPRING_DATASOURCE_USERNAME: offer_user
+      SPRING_DATASOURCE_PASSWORD: offer_password
+      OFFER_SYNC_CRON: "-"
+      JUST_JOIN_IT_SYNCHRONIZER_ENABLED: "false"
+      THE_PROTOCOL_IT_SYNCHRONIZER_ENABLED: "false"
+      NOFLUFFJOBS_SYNCHRONIZER_ENABLED: "false"
+      DATASET_EXPORT_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx768m -XX:+ExitOnOutOfMemoryError
+    ports:
+      - "127.0.0.1:8080:8080"
+    stop_grace_period: 30s
+
+volumes:
+  backend-local-postgres-data:
